@@ -69,6 +69,16 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    categories: Category;
+    'shop-items': ShopItem;
+    'trade-proposals': TradeProposal;
+    'proposal-versions': ProposalVersion;
+    'proposal-messages': ProposalMessage;
+    notifications: Notification;
+    reports: Report;
+    disputes: Dispute;
+    'view-history': ViewHistory;
+    'search-history': SearchHistory;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,17 +88,31 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    'shop-items': ShopItemsSelect<false> | ShopItemsSelect<true>;
+    'trade-proposals': TradeProposalsSelect<false> | TradeProposalsSelect<true>;
+    'proposal-versions': ProposalVersionsSelect<false> | ProposalVersionsSelect<true>;
+    'proposal-messages': ProposalMessagesSelect<false> | ProposalMessagesSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    reports: ReportsSelect<false> | ReportsSelect<true>;
+    disputes: DisputesSelect<false> | DisputesSelect<true>;
+    'view-history': ViewHistorySelect<false> | ViewHistorySelect<true>;
+    'search-history': SearchHistorySelect<false> | SearchHistorySelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'match-score-config': MatchScoreConfig;
+  };
+  globalsSelect: {
+    'match-score-config': MatchScoreConfigSelect<false> | MatchScoreConfigSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -122,7 +146,58 @@ export interface UserAuthOperations {
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
+  id: number;
+  naam?: string | null;
+  avatar?: (number | null) | Media;
+  /**
+   * Wijk-/postcode-niveau, standaard zichtbaar voor anderen (bv. "1017 CJ" of "Amsterdam-Zuid").
+   */
+  locatie_ruw?: string | null;
+  /**
+   * Precieze coördinaten. Pas delen na een bevestigde afspraak (fysieke veiligheid) — dit veld regelt alleen opslag, niet wanneer het getoond wordt.
+   *
+   * @minItems 2
+   * @maxItems 2
+   */
+  locatie_exact?: [number, number] | null;
+  /**
+   * Beide verificatievelden moeten true zijn voordat een gebruiker een TradeProposal mag starten of accepteren (afgedwongen in TradeProposals, niet hier).
+   */
+  geverifieerd_email?: boolean | null;
+  geverifieerd_telefoon?: boolean | null;
+  /**
+   * Intern, geen gebruikersinput. Voor sockpuppet-/collusiedetectie.
+   */
+  signup_device_ip?: string | null;
+  /**
+   * Denormalized teller, bijgewerkt bij het afronden van een TradeProposal.
+   */
+  voltooide_ruilen?: number | null;
+  /**
+   * Denormalized teller, bijgewerkt bij intrekken/weigeren van een TradeProposal.
+   */
+  ingetrokken_of_geweigerd?: number | null;
+  laatst_actief?: string | null;
+  /**
+   * Simpele aan/uit-schakelaar, geen niveau-instelling.
+   */
+  ai_onderhandelhulp_aan?: boolean | null;
+  /**
+   * Aan/uit-beheer voor gebruik van ViewHistory/SearchHistory in suggesties/matching.
+   */
+  geschiedenis_gebruik_aan?: boolean | null;
+  /**
+   * Breed, statisch signaal — vervangt het vervallen WishlistItems. Kan op elke diepte in de categorieboom staan.
+   */
+  interesses?: (number | Category)[] | null;
+  /**
+   * Wordt true zodra de verplichte intake (interesses + locatie) na registratie is doorlopen. Zolang false: gebruiker naar intake-flow i.p.v. Ontdekken.
+   */
+  onboarding_voltooid?: boolean | null;
+  /**
+   * Bij accountverwijdering: Geanonimiseerd i.p.v. hard delete. naam/email/avatar/locatie_exact worden gescrubd; gekoppelde ShopItems/TradeProposals/ProposalMessages blijven bestaan.
+   */
+  account_status?: ('actief' | 'geanonimiseerd') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -147,7 +222,7 @@ export interface User {
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
+  id: number;
   alt: string;
   updatedAt: string;
   createdAt: string;
@@ -162,11 +237,235 @@ export interface Media {
   focalY?: number | null;
 }
 /**
+ * Vaste, hiërarchische categorieën/tags. Elke knoop is een geldig eindpunt (bv. "Auto's" is net zo geldig als "Auto's > BMW > 3-serie").
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  naam: string;
+  /**
+   * Optioneel. Leeg = hoofdcategorie.
+   */
+  parent?: (number | null) | Category;
+  /**
+   * URL-vriendelijke, unieke sleutel.
+   */
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-items".
+ */
+export interface ShopItem {
+  id: number;
+  eigenaar: number | User;
+  titel: string;
+  beschrijving: string;
+  /**
+   * Voedt de matchscore-factor "aanbod-vraag overlap" tegen Users.interesses van anderen.
+   */
+  categorie: number | Category;
+  fotos: (number | Media)[];
+  staat: 'nieuwstaat' | 'zo_goed_als_nieuw' | 'gebruikssporen' | 'duidelijke_gebruikssporen';
+  /**
+   * Nooit een prijs — vaste schaal, geen prijsrange of vrije tekst.
+   */
+  waarde_indicatie: 'laag' | 'midden' | 'hoog';
+  /**
+   * "Beide mogelijk" = beide opties selecteren. Voedt locatie-weging in de matchscore.
+   */
+  overdracht: ('ophalen' | 'verzenden')[];
+  /**
+   * Een item blijft open voor meerdere gelijktijdige voorstellen; dit veld is de ruil-levenscyclus van een al gepubliceerd item (geen concept/draft-staat — die volgt later apart).
+   */
+  status: 'beschikbaar' | 'in_onderhandeling' | 'geruild' | 'ingetrokken';
+  /**
+   * Wat de aanbieder voor dit item het liefst terugkrijgt. Leeg = alles mag geboden worden; productmatch valt dan terug op categorie/Interesses-overlap. Bewust geen apart boolean-veld.
+   */
+  gewenst_terug?: (number | null) | Category;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "trade-proposals".
+ */
+export interface TradeProposal {
+  id: number;
+  deelnemer_a: number | User;
+  deelnemer_b: number | User;
+  /**
+   * Elke statuswijziging mag een Notification triggeren (categorie Ruilvoorstel) — ook tussenstappen, niet alleen de eindstations.
+   */
+  status:
+    | 'voorgesteld'
+    | 'in_onderhandeling'
+    | 'geaccepteerd_wacht_op_bevestiging'
+    | 'bevestigd_door_a'
+    | 'bevestigd_door_b'
+    | 'voltooid'
+    | 'geweigerd'
+    | 'ingetrokken'
+    | 'verlopen';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "proposal-versions".
+ */
+export interface ProposalVersion {
+  id: number;
+  voorstel: number | TradeProposal;
+  /**
+   * Wie deze versie voorstelde.
+   */
+  auteur: number | User;
+  items_van_a?: (number | ShopItem)[] | null;
+  items_van_b?: (number | ShopItem)[] | null;
+  /**
+   * Wat de lichte AI-onderhandelhulp bij deze versie voorstelde, indien getoond.
+   */
+  ai_balans_suggestie?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "proposal-messages".
+ */
+export interface ProposalMessage {
+  id: number;
+  voorstel: number | TradeProposal;
+  auteur: number | User;
+  tekst: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Bewust een beperkte set triggers, geen regel per systeemgebeurtenis. Matches triggeren hier expliciet NIET — dat loopt via een visuele indicator op het productkaartje (mag-later, geen v1-veld).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  ontvanger: number | User;
+  /**
+   * Bepaalt de kleurcodering in de UI: groen / goud / grijs-gemuted.
+   */
+  categorie: 'ruilvoorstel' | 'geschil' | 'systeem';
+  /**
+   * Ingevuld bij categorie Ruilvoorstel.
+   */
+  gerelateerd_voorstel?: (number | null) | TradeProposal;
+  /**
+   * Ingevuld bij categorie Geschil.
+   */
+  gerelateerd_geschil?: (number | null) | Dispute;
+  tekst: string;
+  gelezen?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Geschil = eerlijk meningsverschil over wat er gebeurd is. Hybride proces (besloten): eerst partijen zelf, bij impasse beslist het platform-team bindend (eBay Resolution Center-model). Exacte termijnen/bewijsvorm/appel nog niet uitgewerkt.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "disputes".
+ */
+export interface Dispute {
+  id: number;
+  voorstel: number | TradeProposal;
+  indiener: number | User;
+  omschrijving: string;
+  /**
+   * Bij status Beslist: dit is het moment dat een Notification (categorie Geschil) triggert.
+   */
+  status: 'open' | 'in_onderling_overleg' | 'geescaleerd_naar_team' | 'beslist' | 'gesloten';
+  /**
+   * Optioneel — Swopla-teamlid dat de knoop doorhakt bij escalatie.
+   */
+  beoordeeld_door?: (number | null) | User;
+  /**
+   * Optioneel — toelichting op de bindende beslissing.
+   */
+  beslissing?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Melden = kwade trouw/misbruik. Bewust gescheiden van Disputes (geschil = eerlijk meningsverschil) — nooit samenvoegen.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports".
+ */
+export interface Report {
+  id: number;
+  melder: number | User;
+  /**
+   * Waarover wordt gemeld — een gebruiker of een specifiek item.
+   */
+  onderwerp:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'shop-items';
+        value: number | ShopItem;
+      };
+  reden: string;
+  /**
+   * Statusopties nog niet expliciet besloten in het concept — eerste redelijke aanname, ter review.
+   */
+  status: 'open' | 'in_behandeling' | 'afgehandeld';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "view-history".
+ */
+export interface ViewHistory {
+  id: number;
+  kijker: number | User;
+  bekeken_profiel: number | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Dit is ook de plek waar specifiek, actueel zoeken landt — vervangt het vervallen WishlistItems (zie Categories/Users.interesses voor het brede, statische signaal).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "search-history".
+ */
+export interface SearchHistory {
+  id: number;
+  gebruiker: number | User;
+  zoekterm: string;
+  filters?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -183,20 +482,60 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'shop-items';
+        value: number | ShopItem;
+      } | null)
+    | ({
+        relationTo: 'trade-proposals';
+        value: number | TradeProposal;
+      } | null)
+    | ({
+        relationTo: 'proposal-versions';
+        value: number | ProposalVersion;
+      } | null)
+    | ({
+        relationTo: 'proposal-messages';
+        value: number | ProposalMessage;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'reports';
+        value: number | Report;
+      } | null)
+    | ({
+        relationTo: 'disputes';
+        value: number | Dispute;
+      } | null)
+    | ({
+        relationTo: 'view-history';
+        value: number | ViewHistory;
+      } | null)
+    | ({
+        relationTo: 'search-history';
+        value: number | SearchHistory;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   updatedAt: string;
   createdAt: string;
@@ -206,10 +545,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   key?: string | null;
   value?:
@@ -229,7 +568,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -240,6 +579,21 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  naam?: T;
+  avatar?: T;
+  locatie_ruw?: T;
+  locatie_exact?: T;
+  geverifieerd_email?: T;
+  geverifieerd_telefoon?: T;
+  signup_device_ip?: T;
+  voltooide_ruilen?: T;
+  ingetrokken_of_geweigerd?: T;
+  laatst_actief?: T;
+  ai_onderhandelhulp_aan?: T;
+  geschiedenis_gebruik_aan?: T;
+  interesses?: T;
+  onboarding_voltooid?: T;
+  account_status?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -274,6 +628,131 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  naam?: T;
+  parent?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shop-items_select".
+ */
+export interface ShopItemsSelect<T extends boolean = true> {
+  eigenaar?: T;
+  titel?: T;
+  beschrijving?: T;
+  categorie?: T;
+  fotos?: T;
+  staat?: T;
+  waarde_indicatie?: T;
+  overdracht?: T;
+  status?: T;
+  gewenst_terug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "trade-proposals_select".
+ */
+export interface TradeProposalsSelect<T extends boolean = true> {
+  deelnemer_a?: T;
+  deelnemer_b?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "proposal-versions_select".
+ */
+export interface ProposalVersionsSelect<T extends boolean = true> {
+  voorstel?: T;
+  auteur?: T;
+  items_van_a?: T;
+  items_van_b?: T;
+  ai_balans_suggestie?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "proposal-messages_select".
+ */
+export interface ProposalMessagesSelect<T extends boolean = true> {
+  voorstel?: T;
+  auteur?: T;
+  tekst?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  ontvanger?: T;
+  categorie?: T;
+  gerelateerd_voorstel?: T;
+  gerelateerd_geschil?: T;
+  tekst?: T;
+  gelezen?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports_select".
+ */
+export interface ReportsSelect<T extends boolean = true> {
+  melder?: T;
+  onderwerp?: T;
+  reden?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "disputes_select".
+ */
+export interface DisputesSelect<T extends boolean = true> {
+  voorstel?: T;
+  indiener?: T;
+  omschrijving?: T;
+  status?: T;
+  beoordeeld_door?: T;
+  beslissing?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "view-history_select".
+ */
+export interface ViewHistorySelect<T extends boolean = true> {
+  kijker?: T;
+  bekeken_profiel?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "search-history_select".
+ */
+export interface SearchHistorySelect<T extends boolean = true> {
+  gebruiker?: T;
+  zoekterm?: T;
+  filters?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -314,6 +793,73 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Matchscore-gewichten. Exacte getallen nog niet besloten — richting/volgorde staat vast, huidige waardes zijn placeholders.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "match-score-config".
+ */
+export interface MatchScoreConfig {
+  id: number;
+  /**
+   * Weging van overlap tussen ShopItems.gewenst_terug en het aanbod van de bezoeker, wanneer dat veld is ingevuld.
+   */
+  gewicht_productmatch_specifiek?: number | null;
+  /**
+   * Weging van de gewone aanbod-vraag/Interesses-overlap, gebruikt wanneer gewenst_terug leeg is. Lager dan het specifieke gewicht.
+   */
+  gewicht_productmatch_algemeen?: number | null;
+  gewicht_staat_en_waarde?: number | null;
+  /**
+   * Shop-brede overlap.
+   */
+  gewicht_aanbod_vraag_overlap?: number | null;
+  gewicht_locatie?: number | null;
+  gewicht_betrouwbaarheid?: number | null;
+  gewicht_sociaal?: number | null;
+  /**
+   * Optioneel, mag later — vandaar default 0.
+   */
+  gewicht_reviews?: number | null;
+  locatie_weging_ophalen_vs_verzenden?: number | null;
+  /**
+   * Weegt zwaarst — actiefste signaal.
+   */
+  gewicht_ontdekken_gewenst_terug?: number | null;
+  gewicht_ontdekken_zoekgeschiedenis?: number | null;
+  /**
+   * Breedste, meest passieve signaal — ook de terugval wanneer de twee bovenstaande ontbreken.
+   */
+  gewicht_ontdekken_interesses?: number | null;
+  /**
+   * Percentage vanaf waar een item gegarandeerd op de eerste pagina/regels staat (besloten: 75). Volgorde binnen deze band mag door elkaar lopen.
+   */
+  ontdekken_hoge_match_drempel?: number | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "match-score-config_select".
+ */
+export interface MatchScoreConfigSelect<T extends boolean = true> {
+  gewicht_productmatch_specifiek?: T;
+  gewicht_productmatch_algemeen?: T;
+  gewicht_staat_en_waarde?: T;
+  gewicht_aanbod_vraag_overlap?: T;
+  gewicht_locatie?: T;
+  gewicht_betrouwbaarheid?: T;
+  gewicht_sociaal?: T;
+  gewicht_reviews?: T;
+  locatie_weging_ophalen_vs_verzenden?: T;
+  gewicht_ontdekken_gewenst_terug?: T;
+  gewicht_ontdekken_zoekgeschiedenis?: T;
+  gewicht_ontdekken_interesses?: T;
+  ontdekken_hoge_match_drempel?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
