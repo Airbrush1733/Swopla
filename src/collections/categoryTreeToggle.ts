@@ -14,6 +14,7 @@ type Id = string
 
 const expandedIds = new Set<Id>()
 const childCounts = new Map<Id, number>()
+const childIdsByParent = new Map<Id, Set<Id>>()
 const listeners = new Set<() => void>()
 
 function notify(): void {
@@ -23,6 +24,9 @@ function notify(): void {
 export function registerRow(id: Id, parentId: Id | null): () => void {
   if (parentId) {
     childCounts.set(parentId, (childCounts.get(parentId) ?? 0) + 1)
+    const ids = childIdsByParent.get(parentId) ?? new Set<Id>()
+    ids.add(id)
+    childIdsByParent.set(parentId, ids)
     notify()
   }
   return () => {
@@ -33,9 +37,21 @@ export function registerRow(id: Id, parentId: Id | null): () => void {
       } else {
         childCounts.set(parentId, next)
       }
+      const ids = childIdsByParent.get(parentId)
+      if (ids) {
+        ids.delete(id)
+        if (ids.size === 0) childIdsByParent.delete(parentId)
+      }
       notify()
     }
   }
+}
+
+// Directe kind-id's van een categorie (niet recursief) — gebruikt door
+// CategoryProductCountCell.tsx om het aantal producten van subcategorieën
+// mee te tellen bij een hoofdcategorie.
+export function getChildIds(id: Id): Id[] {
+  return Array.from(childIdsByParent.get(id) ?? [])
 }
 
 export function getChildCount(id: Id): number {

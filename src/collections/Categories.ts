@@ -4,7 +4,7 @@ export const Categories: CollectionConfig = {
   slug: 'categories',
   admin: {
     useAsTitle: 'naam',
-    defaultColumns: ['naam', 'parent', 'slug'],
+    defaultColumns: ['naam', 'parent', 'aantal_producten', 'slug'],
     description:
       'Vaste, hiërarchische categorieën/tags. Elke knoop is een geldig eindpunt (bv. "Auto\'s" is net zo geldig als "Auto\'s > BMW > 3-serie").',
     // Alle ~68 categorieën (13 hoofd + subs) passen ruim op één pagina. Nodig
@@ -58,6 +58,17 @@ export const Categories: CollectionConfig = {
       unique: true,
       admin: {
         description: 'URL-vriendelijke, unieke sleutel.',
+      },
+    },
+    // Alleen weergave, geen echt veld: aantal ShopItems in deze categorie.
+    // Bij een hoofdcategorie inclusief alle subcategorieën (zie CategoryProductCountCell.tsx).
+    {
+      name: 'aantal_producten',
+      type: 'ui',
+      admin: {
+        components: {
+          Cell: '/collections/CategoryProductCountCell#CategoryProductCountCell',
+        },
       },
     },
   ],
