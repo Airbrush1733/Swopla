@@ -270,7 +270,9 @@ export default function FilterZijbalk({
     <>
       {/* Desktop / breder dan 900px */}
       <aside className="filters">
-        <div className="filters__titel">🔧 Filters</div>
+        <div className="filters__titel">
+          <FilterIcoon /> Filters
+        </div>
         <FilterInhoud accordion={false} />
       </aside>
 

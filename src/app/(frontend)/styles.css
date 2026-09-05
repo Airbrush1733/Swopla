@@ -20,6 +20,10 @@
   --swopla-amber-rand: oklch(88% 0.05 55);
   --swopla-amber: oklch(65% 0.14 55);
   --swopla-rood: oklch(55% 0.16 25);
+  --swopla-rood-tint: oklch(93% 0.04 25);
+  --swopla-rood-donker: oklch(42% 0.13 25);
+  --swopla-geel-tint: oklch(93% 0.05 95);
+  --swopla-geel-donker: oklch(42% 0.09 95);
 }
 
 html,
@@ -355,6 +359,10 @@ button {
   font-weight: 700;
   font-size: 16px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--swopla-tekst);
 }
 
 .filtergroep {
@@ -693,14 +701,17 @@ button {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
-  background: oklch(100% 0 0 / 0.92);
-  color: oklch(30% 0.02 150);
   box-shadow: 0 1px 3px oklch(0% 0 0 / 0.15);
 }
 
+.match-badge--neutraal {
+  background: var(--swopla-vlak);
+  color: var(--swopla-grijs);
+}
+
 .match-badge--hoog {
-  background: var(--swopla-groen);
-  color: #fff;
+  background: var(--swopla-groen-tint);
+  color: var(--swopla-groen-donker);
 }
 
 .product-kaart__body {
@@ -1086,12 +1097,20 @@ button {
 }
 
 .marieke-pill {
-  background: var(--swopla-groen);
-  color: #fff;
   font-size: 13px;
   font-weight: 700;
   padding: 6px 14px;
   border-radius: 999px;
+}
+
+.marieke-pill--neutraal {
+  background: var(--swopla-vlak);
+  color: var(--swopla-grijs);
+}
+
+.marieke-pill--hoog {
+  background: var(--swopla-groen-tint);
+  color: var(--swopla-groen-donker);
 }
 
 .ruilkansen__items {
@@ -1124,6 +1143,9 @@ button {
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 12px;
+}
+
+.ruilkans-chip__pct--neutraal {
   background: var(--swopla-vlak);
   color: var(--swopla-grijs);
 }

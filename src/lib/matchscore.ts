@@ -240,3 +240,21 @@ export function berekenMariekeMatch(input: MariekeMatchInput): number {
   if (maxMogelijk === 0) return 0
   return Math.round((score / maxMogelijk) * 100)
 }
+
+// ---------------------------------------------------------------------------
+// Kleurcodering voor de match-badges (Ontdekken, Ruilkansen)
+// ---------------------------------------------------------------------------
+
+export type MatchBand = 'neutraal' | 'hoog'
+
+/**
+ * Vertaalt een matchpercentage naar een band voor de kleurcodering van de match-badges.
+ * Bewust maar twee standen (besloten, zie Ralphs feedback): alles blijft in de neutrale,
+ * rustige stijl en alleen bij de configureerbare Ontdekken-drempel
+ * (`MatchScoreConfig.ontdekken_hoge_match_drempel`, default 75) of hoger springt de groene
+ * kleur eruit. Een rood/geel/groen-schaal zou een lagere match onterecht als "slecht" laten
+ * ogen, terwijl een lager percentage nog steeds een prima aanbod kan zijn.
+ */
+export function matchBand(score: number, hogeMatchDrempel: number): MatchBand {
+  return score >= hogeMatchDrempel ? 'hoog' : 'neutraal'
+}

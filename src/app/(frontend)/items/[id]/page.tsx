@@ -4,7 +4,7 @@ import React from 'react'
 
 import { initialenVan } from '@/lib/format'
 import { bouwCategorieMap } from '@/lib/categorieHelpers'
-import { berekenMariekeMatch, berekenProductmatch } from '@/lib/matchscore'
+import { berekenMariekeMatch, berekenProductmatch, matchBand } from '@/lib/matchscore'
 import { STAAT_LABELS, WAARDE_LABELS } from '@/lib/ontdekkenFilters'
 import { getPayloadClient, getViewer } from '@/lib/viewer'
 import type { Media, ShopItem, User } from '@/payload-types'
@@ -111,6 +111,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     .sort((a, b) => b.score - a.score)
 
   const besteRuilkans = ruilkansen[0]
+
+  const hogeMatchDrempel = matchConfig.ontdekken_hoge_match_drempel ?? 75
 
   const fotos = item.fotos.filter((f): f is Media => typeof f === 'object')
   const categorieNaam = typeof item.categorie === 'object' ? item.categorie.naam : ''
@@ -249,7 +251,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <div className="ruilkansen__header">
             <h2>🔁 Ruilkansen</h2>
             {mariekeMatch !== null && eigenaar && (
-              <span className="marieke-pill">
+              <span
+                className={`marieke-pill marieke-pill--${matchBand(mariekeMatch, hogeMatchDrempel)}`}
+              >
                 {mariekeMatch}% match met {eigenaar.naam ?? eigenaar.email}
               </span>
             )}
@@ -284,7 +288,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     {foto?.url && <img src={foto.url} alt={foto.alt} />}
                     {kandidaat.titel}
                     <span
-                      className={`ruilkans-chip__pct${score >= 80 ? ' ruilkans-chip__pct--hoog' : ''}`}
+                      className={`ruilkans-chip__pct ruilkans-chip__pct--${matchBand(score, hogeMatchDrempel)}`}
                     >
                       {score}%
                     </span>
