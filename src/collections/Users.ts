@@ -1,4 +1,37 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
+
+/**
+ * Anonimiseer-routine bij accountverwijdering (besloten, zie
+ * technische-architectuur-schets.md → "Bouwstatus"): zodra account_status naar
+ * 'geanonimiseerd' verandert (ongeacht welke UI dat aanroept — er is nog geen
+ * "account verwijderen"-knop gebouwd, dit is de kant die daar straks op aansluit),
+ * worden naam/email/avatar/locatie_exact automatisch gescrubd. Gekoppelde
+ * ShopItems/TradeProposals/ProposalMessages blijven bestaan, zoals besloten.
+ *
+ * Bewust NIET meegenomen: het wachtwoord ongeldig maken. Dat raakt Payload's
+ * eigen auth-hooks en is een aparte, kleine vervolgstap als dat nodig blijkt —
+ * niet stilzwijgend hier toegevoegd.
+ */
+const anonimiseerBijStatuswijziging: CollectionBeforeChangeHook = ({ data, operation, originalDoc }) => {
+  if (operation !== 'update') {
+    return data
+  }
+
+  const wordtGeanonimiseerd =
+    data.account_status === 'geanonimiseerd' && originalDoc?.account_status !== 'geanonimiseerd'
+
+  if (!wordtGeanonimiseerd) {
+    return data
+  }
+
+  return {
+    ...data,
+    avatar: null,
+    email: `geanonimiseerd-${originalDoc.id}@swopla.invalid`,
+    locatie_exact: null,
+    naam: 'Verwijderde gebruiker',
+  }
+}
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -7,6 +40,9 @@ export const Users: CollectionConfig = {
     defaultColumns: ['naam', 'email', 'account_status', 'onboarding_voltooid'],
   },
   auth: true,
+  hooks: {
+    beforeChange: [anonimiseerBijStatuswijziging],
+  },
   fields: [
     // Email + wachtwoord komen automatisch mee via auth: true
 
@@ -74,7 +110,8 @@ export const Users: CollectionConfig = {
       defaultValue: 0,
       admin: {
         readOnly: true,
-        description: 'Denormalized teller, bijgewerkt bij het afronden van een TradeProposal.',
+        description:
+          'Denormalized teller. Wordt automatisch +1 gezet voor beide deelnemers zodra een TradeProposal op "Voltooid" komt (zie hooks in TradeProposals.ts).',
       },
     },
     {
@@ -83,7 +120,8 @@ export const Users: CollectionConfig = {
       defaultValue: 0,
       admin: {
         readOnly: true,
-        description: 'Denormalized teller, bijgewerkt bij intrekken/weigeren van een TradeProposal.',
+        description:
+          'Denormalized teller. +1 voor beide deelnemers bij "Verlopen"; +1 alleen voor wie intrekt bij "Ingetrokken"; GEEN wijziging bij "Geweigerd" (zie hooks in TradeProposals.ts).',
       },
     },
     {
@@ -142,7 +180,7 @@ export const Users: CollectionConfig = {
       ],
       admin: {
         description:
-          'Bij accountverwijdering: Geanonimiseerd i.p.v. hard delete. naam/email/avatar/locatie_exact worden gescrubd; gekoppelde ShopItems/TradeProposals/ProposalMessages blijven bestaan.',
+          'Bij accountverwijdering: Geanonimiseerd i.p.v. hard delete. Zodra dit veld naar Geanonimiseerd gaat, scrubt een hook automatisch naam/email/avatar/locatie_exact. Gekoppelde ShopItems/TradeProposals/ProposalMessages blijven bestaan.',
       },
     },
   ],

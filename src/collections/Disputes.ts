@@ -1,4 +1,45 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionAfterChangeHook, CollectionConfig } from 'payload'
+
+import { getRelationId } from './hookUtils'
+
+/**
+ * Notificatie bij de uitkomst van een geschil (besloten: alleen bij status Beslist,
+ * niet bij tussenstappen zoals Geëscaleerd naar team — sluit aan bij het
+ * "zo min mogelijk notificaties"-uitgangspunt uit het concept). Gaat naar BEIDE
+ * deelnemers van het onderliggende TradeProposal, niet alleen de indiener — de
+ * uitkomst raakt beide partijen.
+ */
+const notificerenBijBeslissing: CollectionAfterChangeHook = async ({ doc, operation, previousDoc, req }) => {
+  const wordtBeslist = operation === 'update' && doc.status === 'beslist' && previousDoc?.status !== 'beslist'
+  if (!wordtBeslist) {
+    return doc
+  }
+
+  const voorstelId = getRelationId(doc.voorstel)
+  if (typeof voorstelId !== 'number') {
+    return doc
+  }
+
+  const voorstel = await req.payload.findByID({ collection: 'trade-proposals', id: voorstelId, depth: 0 })
+  const idA = getRelationId(voorstel?.deelnemer_a)
+  const idB = getRelationId(voorstel?.deelnemer_b)
+  const ontvangers = [idA, idB].filter((id): id is number => typeof id === 'number')
+
+  for (const ontvanger of ontvangers) {
+    await req.payload.create({
+      collection: 'notifications',
+      data: {
+        categorie: 'geschil',
+        gerelateerd_geschil: doc.id,
+        gelezen: false,
+        ontvanger,
+        tekst: `Geschil #${doc.id} is beslist.`,
+      },
+    })
+  }
+
+  return doc
+}
 
 export const Disputes: CollectionConfig = {
   slug: 'disputes',
@@ -10,6 +51,9 @@ export const Disputes: CollectionConfig = {
   },
   access: {
     read: () => true,
+  },
+  hooks: {
+    afterChange: [notificerenBijBeslissing],
   },
   fields: [
     {
@@ -44,7 +88,7 @@ export const Disputes: CollectionConfig = {
         { label: 'Gesloten', value: 'gesloten' },
       ],
       admin: {
-        description: 'Bij status Beslist: dit is het moment dat een Notification (categorie Geschil) triggert.',
+        description: 'Bij status Beslist: triggert een Notification (categorie Geschil) naar beide deelnemers.',
       },
     },
     {

@@ -170,11 +170,11 @@ export interface User {
    */
   signup_device_ip?: string | null;
   /**
-   * Denormalized teller, bijgewerkt bij het afronden van een TradeProposal.
+   * Denormalized teller. Wordt automatisch +1 gezet voor beide deelnemers zodra een TradeProposal op "Voltooid" komt (zie hooks in TradeProposals.ts).
    */
   voltooide_ruilen?: number | null;
   /**
-   * Denormalized teller, bijgewerkt bij intrekken/weigeren van een TradeProposal.
+   * Denormalized teller. +1 voor beide deelnemers bij "Verlopen"; +1 alleen voor wie intrekt bij "Ingetrokken"; GEEN wijziging bij "Geweigerd" (zie hooks in TradeProposals.ts).
    */
   ingetrokken_of_geweigerd?: number | null;
   laatst_actief?: string | null;
@@ -195,7 +195,7 @@ export interface User {
    */
   onboarding_voltooid?: boolean | null;
   /**
-   * Bij accountverwijdering: Geanonimiseerd i.p.v. hard delete. naam/email/avatar/locatie_exact worden gescrubd; gekoppelde ShopItems/TradeProposals/ProposalMessages blijven bestaan.
+   * Bij accountverwijdering: Geanonimiseerd i.p.v. hard delete. Zodra dit veld naar Geanonimiseerd gaat, scrubt een hook automatisch naam/email/avatar/locatie_exact. Gekoppelde ShopItems/TradeProposals/ProposalMessages blijven bestaan.
    */
   account_status?: ('actief' | 'geanonimiseerd') | null;
   updatedAt: string;
@@ -299,7 +299,7 @@ export interface TradeProposal {
   deelnemer_a: number | User;
   deelnemer_b: number | User;
   /**
-   * Elke statuswijziging mag een Notification triggeren (categorie Ruilvoorstel) — ook tussenstappen, niet alleen de eindstations.
+   * Elke statuswijziging triggert een Notification (categorie Ruilvoorstel) en, bij voltooid/verlopen/ingetrokken, een trackrecord-teller op Users (zie hooks in dit bestand).
    */
   status:
     | 'voorgesteld'
@@ -384,7 +384,7 @@ export interface Dispute {
   indiener: number | User;
   omschrijving: string;
   /**
-   * Bij status Beslist: dit is het moment dat een Notification (categorie Geschil) triggert.
+   * Bij status Beslist: triggert een Notification (categorie Geschil) naar beide deelnemers.
    */
   status: 'open' | 'in_onderling_overleg' | 'geescaleerd_naar_team' | 'beslist' | 'gesloten';
   /**
