@@ -8,6 +8,7 @@ export interface CategoriePickerProps {
   alleCategorieen: Category[]
   name: string
   placeholder?: string
+  standaardCategorie?: Category | null
 }
 
 interface ZwevendePositie {
@@ -67,11 +68,12 @@ export default function CategoriePicker({
   alleCategorieen,
   name,
   placeholder = 'Kies een categorie…',
+  standaardCategorie = null,
 }: CategoriePickerProps) {
   const [bewerken, setBewerken] = useState(false)
   const [zoekterm, setZoekterm] = useState('')
   const [gemarkeerdIndex, setGemarkeerdIndex] = useState(0)
-  const [gekozen, setGekozen] = useState<Category | null>(null)
+  const [gekozen, setGekozen] = useState<Category | null>(standaardCategorie)
   const [positie, setPositie] = useState<ZwevendePositie | null>(null)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)

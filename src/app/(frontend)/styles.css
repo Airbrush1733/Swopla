@@ -871,6 +871,51 @@ button {
   color: var(--swopla-rood);
 }
 
+/* Actie-knopjes (bekijken/bewerken) op Mijn Shop-kaarten. De kaart zelf is bewust niet
+   klikbaar (besloten met Ralph: te makkelijk per ongeluk doorklikken naar de productpagina
+   tijdens het scannen van je eigen shop), dit zijn de enige twee manieren om iets te doen met
+   een eigen item. Verschijnen pas bij hover/focus op de kaart, zodat de kaart rustig blijft
+   ogen zoals de rest van de productgrids; het potloodje staat daarnaast ook nog los verborgen
+   (zie MijnShopKaart.tsx) zolang het item niet meer "Beschikbaar" is. */
+.mijn-shop-kaart__acties {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.mijn-shop-kaart__actie-knop {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: oklch(100% 0 0 / 0.92);
+  color: var(--swopla-grijs);
+  box-shadow: 0 1px 3px oklch(0% 0 0 / 0.15);
+  opacity: 0;
+  transform: translateY(-3px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.product-kaart:hover .mijn-shop-kaart__actie-knop,
+.product-kaart:focus-within .mijn-shop-kaart__actie-knop {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mijn-shop-kaart__actie-knop:hover,
+.mijn-shop-kaart__actie-knop:focus-visible {
+  background: var(--swopla-groen);
+  color: #fff;
+}
+
 .inzichten {
   width: 300px;
   flex-shrink: 0;

@@ -2,7 +2,12 @@
 
 import React, { useRef, useState } from 'react'
 
-interface FotoItem {
+interface BestaandeFoto {
+  id: number
+  url: string
+}
+
+interface NieuweFoto {
   file: File
   url: string
 }
@@ -23,43 +28,67 @@ function FotoIcoon() {
   )
 }
 
+export interface FotoUploadVeldProps {
+  /**
+   * Al bestaande, al opgeslagen foto's (voor het bewerken van een item). Leeg bij "Item
+   * toevoegen". Verwijderen van een bestaande foto haalt hem alleen los van dit item (via het
+   * meegestuurde `behouden_foto_ids`-veld), het Media-record zelf wordt niet verwijderd, zie
+   * de toelichting bij `wijzigItem` in shop/[id]/bewerken/actions.ts.
+   */
+  bestaandeFotos?: BestaandeFoto[]
+}
+
 /**
  * Foto-upload als één rustige dropzone (sleep-of-klik), zoals in de mockup -- geen los
- * technisch bestandsveld. Eenmaal gekozen foto's tonen als kleine thumbnails eronder, elk met
- * een verwijderknopje. De echte upload gaat native mee met de form-submit (hidden
- * <input type="file" name="fotos">); toevoegen/verwijderen synchroniseert die input via een
- * DataTransfer, omdat een FileList zelf niet muteerbaar is.
+ * technisch bestandsveld. Zowel bestaande (bij bewerken) als nieuw gekozen foto's tonen als
+ * kleine thumbnails, elk met een verwijderknopje. Nieuwe foto's gaan native mee met de
+ * form-submit (hidden <input type="file" name="fotos">, gesynchroniseerd via DataTransfer,
+ * omdat een FileList zelf niet muteerbaar is); welke bestaande foto's zijn blijven staan gaat
+ * mee via een los hidden veld (`behouden_foto_ids`), omdat die niet via een file-input kunnen.
  */
-export default function FotoUploadVeld() {
+export default function FotoUploadVeld({ bestaandeFotos = [] }: FotoUploadVeldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const [fotos, setFotos] = useState<FotoItem[]>([])
+  const [behouden, setBehouden] = useState<BestaandeFoto[]>(bestaandeFotos)
+  const [nieuwe, setNieuwe] = useState<NieuweFoto[]>([])
   const [sleepActief, setSleepActief] = useState(false)
 
-  function synchroniseerInput(items: FotoItem[]) {
+  function synchroniseerInput(items: NieuweFoto[]) {
     const overdracht = new DataTransfer()
     items.forEach((item) => overdracht.items.add(item.file))
     if (inputRef.current) inputRef.current.files = overdracht.files
   }
 
   function voegToe(bestanden: File[]) {
-    const nieuwe = bestanden
+    const toegevoegd = bestanden
       .filter((f) => f.type.startsWith('image/'))
       .map((file) => ({ file, url: URL.createObjectURL(file) }))
-    if (nieuwe.length === 0) return
-    const samen = [...fotos, ...nieuwe]
-    setFotos(samen)
+    if (toegevoegd.length === 0) return
+    const samen = [...nieuwe, ...toegevoegd]
+    setNieuwe(samen)
     synchroniseerInput(samen)
   }
 
-  function verwijder(index: number) {
-    URL.revokeObjectURL(fotos[index].url)
-    const overig = fotos.filter((_, i) => i !== index)
-    setFotos(overig)
+  function verwijderNieuwe(index: number) {
+    URL.revokeObjectURL(nieuwe[index].url)
+    const overig = nieuwe.filter((_, i) => i !== index)
+    setNieuwe(overig)
     synchroniseerInput(overig)
   }
 
+  function verwijderBestaande(id: number) {
+    setBehouden((prev) => prev.filter((f) => f.id !== id))
+  }
+
+  const totaalAantal = behouden.length + nieuwe.length
+
   return (
     <div>
+      <input
+        type="hidden"
+        name="behouden_foto_ids"
+        value={behouden.map((f) => f.id).join(',')}
+        readOnly
+      />
       <input
         ref={inputRef}
         type="file"
@@ -88,16 +117,32 @@ export default function FotoUploadVeld() {
           <FotoIcoon />
         </div>
         <div className="foto-dropzone__tekst">
-          {fotos.length === 0
+          {totaalAantal === 0
             ? 'Sleep foto’s hierheen of klik om te uploaden'
             : 'Sleep meer foto’s hierheen of klik om toe te voegen'}
         </div>
         <div className="foto-dropzone__subtekst">Minimaal 1 foto</div>
       </div>
 
-      {fotos.length > 0 && (
+      {totaalAantal > 0 && (
         <div className="foto-upload__thumbs">
-          {fotos.map((foto, i) => (
+          {behouden.map((foto) => (
+            <div key={`bestaand-${foto.id}`} className="foto-upload__thumb">
+              <img src={foto.url} alt="" />
+              <button
+                type="button"
+                className="foto-upload__verwijder"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  verwijderBestaande(foto.id)
+                }}
+                aria-label="Foto verwijderen"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {nieuwe.map((foto, i) => (
             <div key={foto.url} className="foto-upload__thumb">
               <img src={foto.url} alt="" />
               <button
@@ -105,7 +150,7 @@ export default function FotoUploadVeld() {
                 className="foto-upload__verwijder"
                 onClick={(e) => {
                   e.stopPropagation()
-                  verwijder(i)
+                  verwijderNieuwe(i)
                 }}
                 aria-label="Foto verwijderen"
               >

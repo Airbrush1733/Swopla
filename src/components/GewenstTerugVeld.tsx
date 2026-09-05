@@ -7,6 +7,7 @@ import type { Category } from '@/payload-types'
 
 export interface GewenstTerugVeldProps {
   alleCategorieen: Category[]
+  standaardCategorie?: Category | null
 }
 
 /**
@@ -20,8 +21,11 @@ export interface GewenstTerugVeldProps {
  * decoratief veld maar het directe, actiefste matchscore-signaal voor dit item (zwaarder dan
  * de algemene Interesses-overlap), dus moet er ook zo uitzien.
  */
-export default function GewenstTerugVeld({ alleCategorieen }: GewenstTerugVeldProps) {
-  const [allesMag, setAllesMag] = useState(true)
+export default function GewenstTerugVeld({
+  alleCategorieen,
+  standaardCategorie = null,
+}: GewenstTerugVeldProps) {
+  const [allesMag, setAllesMag] = useState(!standaardCategorie)
 
   return (
     <div className="veld veld--nadruk">
@@ -40,7 +44,13 @@ export default function GewenstTerugVeld({ alleCategorieen }: GewenstTerugVeldPr
         <input type="checkbox" checked={allesMag} onChange={(e) => setAllesMag(e.target.checked)} />
         Alles mag geboden worden
       </label>
-      {!allesMag && <CategoriePicker alleCategorieen={alleCategorieen} name="gewenst_terug" />}
+      {!allesMag && (
+        <CategoriePicker
+          alleCategorieen={alleCategorieen}
+          name="gewenst_terug"
+          standaardCategorie={standaardCategorie}
+        />
+      )}
     </div>
   )
 }

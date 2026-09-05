@@ -17,10 +17,25 @@ function overdrachtLabel(overdracht: ShopItem['overdracht']): string {
   return 'Verzenden'
 }
 
-export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProductDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ van?: string }>
+}) {
   const { id: idParam } = await params
+  const { van } = await searchParams
   const id = Number(idParam)
   if (!Number.isFinite(id)) notFound()
+
+  // Vanaf Mijn Shop kom je hier via het oogje (bekijken), niet via de zoekresultaten -- de
+  // terug-link moet dan ook naar je shop wijzen, niet naar de homepage. Meegegeven als
+  // ?van=shop-queryparam vanuit MijnShopKaart.tsx, geen aparte route/state nodig hiervoor.
+  const terugLink =
+    van === 'shop'
+      ? { href: '/shop', label: '← Terug naar je shop' }
+      : { href: '/', label: '← Terug naar zoekresultaten' }
 
   const payload = await getPayloadClient()
   const viewer = await getViewer()
@@ -164,8 +179,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="pagina">
-      <Link href="/" className="terug-link">
-        ← Terug naar zoekresultaten
+      <Link href={terugLink.href} className="terug-link">
+        {terugLink.label}
       </Link>
 
       <div className="detail__kaart">
