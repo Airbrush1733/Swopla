@@ -3,6 +3,19 @@ import React from 'react'
 
 import type { ShopInzichten } from '@/lib/shopInzichten'
 
+function InzichtenIcoon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M3 13V7M8 13V3M13 13V9"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 export interface InzichtenZijbalkProps {
   inzichten: ShopInzichten
   potentieleMatches: number
@@ -20,7 +33,9 @@ export default function InzichtenZijbalk({ inzichten, potentieleMatches }: Inzic
 
   return (
     <aside className="inzichten">
-      <div className="inzichten__titel">📊 Inzichten</div>
+      <div className="inzichten__titel">
+        <InzichtenIcoon /> Inzichten
+      </div>
 
       <div className="inzichten-kaart">
         <div className="inzichten-kaart__label">Weergaven deze maand</div>

@@ -30,36 +30,7 @@ type FilterGroepNaam = (typeof FILTER_GROEP_NAMEN)[number]
 function FilterIcoon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path
-        d="M2 4h12M4.5 8h7M6.5 12h3"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <circle
-        cx="5"
-        cy="4"
-        r="1.4"
-        fill="currentColor"
-        stroke="var(--swopla-achtergrond, #fff)"
-        strokeWidth="0.6"
-      />
-      <circle
-        cx="10.5"
-        cy="8"
-        r="1.4"
-        fill="currentColor"
-        stroke="var(--swopla-achtergrond, #fff)"
-        strokeWidth="0.6"
-      />
-      <circle
-        cx="8"
-        cy="12"
-        r="1.4"
-        fill="currentColor"
-        stroke="var(--swopla-achtergrond, #fff)"
-        strokeWidth="0.6"
-      />
+      <path d="M1.5 2.5h13l-5 6.2v5.3l-3 1.3V8.7l-5-6.2z" fill="currentColor" />
     </svg>
   )
 }
