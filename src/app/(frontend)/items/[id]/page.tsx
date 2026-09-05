@@ -12,16 +12,13 @@ import type { Media, ShopItem, User } from '@/payload-types'
 const WAARDE_LABELS: Record<string, string> = { laag: 'Laag', midden: 'Midden', hoog: 'Hoog' }
 
 function overdrachtLabel(overdracht: ShopItem['overdracht']): string {
-  if (overdracht.includes('ophalen') && overdracht.includes('verzenden')) return 'Ophalen of verzenden'
+  if (overdracht.includes('ophalen') && overdracht.includes('verzenden'))
+    return 'Ophalen of verzenden'
   if (overdracht.includes('ophalen')) return 'Ophalen'
   return 'Verzenden'
 }
 
-export default async function ProductDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idParam } = await params
   const id = Number(idParam)
   if (!Number.isFinite(id)) notFound()
@@ -59,7 +56,9 @@ export default async function ProductDetailPage({
     viewer && !isEigenItem
       ? payload.find({
           collection: 'shop-items',
-          where: { and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }] },
+          where: {
+            and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }],
+          },
           depth: 1,
           limit: 50,
         })
@@ -85,7 +84,12 @@ export default async function ProductDetailPage({
   const ruilkansen = viewerEigenItems
     .map((kandidaat) => ({
       kandidaat,
-      score: berekenProductmatch({ bekekenItem: item, kandidaat, categorieMap, config: matchConfig }),
+      score: berekenProductmatch({
+        bekekenItem: item,
+        kandidaat,
+        categorieMap,
+        config: matchConfig,
+      }),
     }))
     .sort((a, b) => b.score - a.score)
 
@@ -100,100 +104,106 @@ export default async function ProductDetailPage({
         ← Terug naar zoekresultaten
       </Link>
 
-      <div className="detail">
-        <div className="detail__media">
-          <div className="detail__hoofdfoto">
-            {fotos[0]?.url && <img src={fotos[0].url} alt={fotos[0].alt} />}
-          </div>
-          {fotos.length > 1 && (
-            <div className="detail__thumbs">
-              {fotos.slice(1, 5).map((foto) => (
-                <div key={foto.id} className="detail__thumb">
-                  <img src={foto.url ?? ''} alt={foto.alt} />
-                </div>
-              ))}
+      <div className="detail__kaart">
+        <div className="detail">
+          <div className="detail__media">
+            <div className="detail__hoofdfoto">
+              {fotos[0]?.url && <img src={fotos[0].url} alt={fotos[0].alt} />}
             </div>
-          )}
-        </div>
-
-        <div className="detail__info">
-          <div className="detail__titelrij">
-            <h1>{item.titel}</h1>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <span
-                className="swopla-btn swopla-btn--outline"
-                style={{ padding: '8px 10px', opacity: 0.6, cursor: 'default' }}
-                title="Bewaren is nog niet gebouwd (nieuw begrip, nog geen datamodel voor)"
-                aria-hidden="true"
-              >
-                ♡
-              </span>
-              <span
-                className="swopla-btn swopla-btn--outline"
-                style={{ padding: '8px 10px', opacity: 0.6, cursor: 'default' }}
-                title="Delen is nog niet gebouwd"
-                aria-hidden="true"
-              >
-                ⤴
-              </span>
-            </div>
+            {fotos.length > 1 && (
+              <div className="detail__thumbs">
+                {fotos.slice(1, 5).map((foto) => (
+                  <div key={foto.id} className="detail__thumb">
+                    <img src={foto.url ?? ''} alt={foto.alt} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="detail__meta">
-            {eigenaar?.locatie_ruw && <span>📍 {eigenaar.locatie_ruw}</span>}
-            <span>🏷️ {categorieNaam}</span>
-          </div>
-
-          <div className="detail__infostrip">
-            <div>
-              <div className="label">Staat</div>
-              <div className="waarde">{STAAT_LABELS[item.staat] ?? item.staat}</div>
-            </div>
-            <div>
-              <div className="label">Waarde</div>
-              <div className="waarde">{WAARDE_LABELS[item.waarde_indicatie] ?? item.waarde_indicatie}</div>
-            </div>
-            <div>
-              <div className="label">Overdracht</div>
-              <div className="waarde">{overdrachtLabel(item.overdracht)}</div>
-            </div>
-          </div>
-
-          <p className="detail__beschrijving">{item.beschrijving}</p>
-
-          {besteRuilkans && besteRuilkans.score > 0 && (
-            <div className="ai-tip">
-              <div className="ai-tip__badge" aria-hidden="true" />
-              <div>
-                AI-tip: &quot;{besteRuilkans.kandidaat.titel}&quot; uit jouw shop is de beste match hieronder bij
-                Ruilkansen — voeg toe en verhoog je ruilkans.
+          <div className="detail__info">
+            <div className="detail__titelrij">
+              <h1>{item.titel}</h1>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <span
+                  className="swopla-btn swopla-btn--outline"
+                  style={{ padding: '8px 10px', opacity: 0.6, cursor: 'default' }}
+                  title="Bewaren is nog niet gebouwd (nieuw begrip, nog geen datamodel voor)"
+                  aria-hidden="true"
+                >
+                  ♡
+                </span>
+                <span
+                  className="swopla-btn swopla-btn--outline"
+                  style={{ padding: '8px 10px', opacity: 0.6, cursor: 'default' }}
+                  title="Delen is nog niet gebouwd"
+                  aria-hidden="true"
+                >
+                  ⤴
+                </span>
               </div>
             </div>
-          )}
 
-          {isEigenItem ? (
-            <div className="niet-ingelogd-melding">Dit is een van je eigen items.</div>
-          ) : viewer ? (
-            <button
-              type="button"
-              className="swopla-btn swopla-btn--primair"
-              style={{ width: '100%' }}
-              title="Ruilvoorstel-overlay is nog niet gebouwd (buiten scope van deze eerste versie)"
-            >
-              Stel een ruil voor
-            </button>
-          ) : (
-            <div className="niet-ingelogd-melding">
-              Kies hierboven een testgebruiker om te zien hoe dit item bij jouw shop past.
+            <div className="detail__meta">
+              {eigenaar?.locatie_ruw && <span>📍 {eigenaar.locatie_ruw}</span>}
+              <span>🏷️ {categorieNaam}</span>
             </div>
-          )}
+
+            <div className="detail__infostrip">
+              <div>
+                <div className="label">Staat</div>
+                <div className="waarde">{STAAT_LABELS[item.staat] ?? item.staat}</div>
+              </div>
+              <div>
+                <div className="label">Waarde</div>
+                <div className="waarde">
+                  {WAARDE_LABELS[item.waarde_indicatie] ?? item.waarde_indicatie}
+                </div>
+              </div>
+              <div>
+                <div className="label">Overdracht</div>
+                <div className="waarde">{overdrachtLabel(item.overdracht)}</div>
+              </div>
+            </div>
+
+            <p className="detail__beschrijving">{item.beschrijving}</p>
+
+            {besteRuilkans && besteRuilkans.score > 0 && (
+              <div className="ai-tip">
+                <div className="ai-tip__badge" aria-hidden="true" />
+                <div>
+                  AI-tip: &quot;{besteRuilkans.kandidaat.titel}&quot; uit jouw shop is de beste
+                  match hieronder bij Ruilkansen — voeg toe en verhoog je ruilkans.
+                </div>
+              </div>
+            )}
+
+            {isEigenItem ? (
+              <div className="niet-ingelogd-melding">Dit is een van je eigen items.</div>
+            ) : viewer ? (
+              <button
+                type="button"
+                className="swopla-btn swopla-btn--primair"
+                style={{ width: '100%' }}
+                title="Ruilvoorstel-overlay is nog niet gebouwd (buiten scope van deze eerste versie)"
+              >
+                Stel een ruil voor
+              </button>
+            ) : (
+              <div className="niet-ingelogd-melding">
+                Kies hierboven een testgebruiker om te zien hoe dit item bij jouw shop past.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {eigenaar && (
         <div className="aanbieder-kaart">
           <div className="aanbieder-kaart__rij">
-            <div className="aanbieder-kaart__avatar">{initialenVan(eigenaar.naam, eigenaar.email)}</div>
+            <div className="aanbieder-kaart__avatar">
+              {initialenVan(eigenaar.naam, eigenaar.email)}
+            </div>
             <div>
               <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
                 {eigenaar.naam ?? eigenaar.email}
@@ -238,7 +248,9 @@ export default async function ProductDetailPage({
           )}
 
           {viewer && ruilkansen.length === 0 && (
-            <div className="niet-ingelogd-melding">Je hebt nog geen items in je shop om aan te bieden.</div>
+            <div className="niet-ingelogd-melding">
+              Je hebt nog geen items in je shop om aan te bieden.
+            </div>
           )}
 
           {ruilkansen.length > 0 && (
@@ -246,10 +258,16 @@ export default async function ProductDetailPage({
               {ruilkansen.map(({ kandidaat, score }) => {
                 const foto = kandidaat.fotos.find((f): f is Media => typeof f === 'object')
                 return (
-                  <Link key={kandidaat.id} href={`/items/${kandidaat.id}`} className="ruilkans-chip">
+                  <Link
+                    key={kandidaat.id}
+                    href={`/items/${kandidaat.id}`}
+                    className="ruilkans-chip"
+                  >
                     {foto?.url && <img src={foto.url} alt={foto.alt} />}
                     {kandidaat.titel}
-                    <span className={`ruilkans-chip__pct${score >= 80 ? ' ruilkans-chip__pct--hoog' : ''}`}>
+                    <span
+                      className={`ruilkans-chip__pct${score >= 80 ? ' ruilkans-chip__pct--hoog' : ''}`}
+                    >
                       {score}%
                     </span>
                   </Link>

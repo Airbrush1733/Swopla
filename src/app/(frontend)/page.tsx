@@ -1,9 +1,13 @@
-import React from 'react'
+import Link from 'next/link'
+import React, { Suspense } from 'react'
 
+import FilterZijbalk from '@/components/FilterZijbalk'
 import ProductCard from '@/components/ProductCard'
-import { bouwCategorieMap, hoofdcategorieen } from '@/lib/categorieHelpers'
+import ZoekEnSorteer from '@/components/ZoekEnSorteer'
+import { bouwCategorieMap, categorieIdVan, hoofdcategorieen } from '@/lib/categorieHelpers'
 import { berekenOntdekkenScore } from '@/lib/matchscore'
 import {
+  berekenFacetTellingen,
   filterItems,
   parseFilters,
   STAAT_LABELS,
@@ -41,53 +45,90 @@ export default async function OntdekkenPage({
   const filters = parseFilters(sp)
 
   const payload = await getPayloadClient()
-  const viewer = await getViewer()
 
-  const [categorieenRes, matchConfig, itemsRes, viewerItemsRes, zoekgeschiedenisRes] =
-    await Promise.all([
-      payload.find({ collection: 'categories', limit: 200, depth: 0 }),
-      payload.findGlobal({ slug: 'match-score-config' }),
-      payload.find({
-        collection: 'shop-items',
-        where: viewer
-          ? { and: [{ status: { equals: 'beschikbaar' } }, { eigenaar: { not_equals: viewer.id } }] }
-          : { status: { equals: 'beschikbaar' } },
-        depth: 1,
-        limit: 100,
-      }),
-      viewer
-        ? payload.find({
-            collection: 'shop-items',
-            where: { and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }] },
-            depth: 0,
-            limit: 100,
-          })
-        : Promise.resolve(null),
-      viewer
-        ? payload.find({
-            collection: 'search-history',
-            where: { gebruiker: { equals: viewer.id } },
-            sort: '-createdAt',
-            depth: 0,
-            limit: 20,
-          })
-        : Promise.resolve(null),
-    ])
+  // viewer + categorieën/matchConfig/shop-items lopen parallel: de shop-items-query zelf
+  // hoeft niet op de viewer te wachten (de eigen items van de viewer worden er hieronder
+  // gewoon uitgefilterd), dus alle vier kunnen in dezelfde ronde naar Neon.
+  const [viewer, categorieenRes, matchConfig, itemsResRuw] = await Promise.all([
+    getViewer(),
+    payload.find({ collection: 'categories', limit: 200, depth: 0 }),
+    payload.findGlobal({ slug: 'match-score-config' }),
+    payload.find({
+      collection: 'shop-items',
+      where: { status: { equals: 'beschikbaar' } },
+      depth: 1,
+      limit: 100,
+    }),
+  ])
+
+  // Deze twee hebben de viewer wél nodig om hun eigen where-clause te bouwen, dus die
+  // kunnen pas in een tweede (nog steeds onderling parallelle) ronde.
+  const [viewerItemsRes, zoekgeschiedenisRes] = await Promise.all([
+    viewer
+      ? payload.find({
+          collection: 'shop-items',
+          where: { and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }] },
+          depth: 0,
+          limit: 100,
+        })
+      : Promise.resolve(null),
+    viewer
+      ? payload.find({
+          collection: 'search-history',
+          where: { gebruiker: { equals: viewer.id } },
+          sort: '-createdAt',
+          depth: 0,
+          limit: 20,
+        })
+      : Promise.resolve(null),
+  ])
 
   const categorieMap = bouwCategorieMap(categorieenRes.docs)
   const hoofdCategorieen = hoofdcategorieen(categorieenRes.docs)
   const viewerEigenItems = viewerItemsRes?.docs ?? []
   const zoektermen = zoekgeschiedenisRes?.docs.map((d) => d.zoekterm) ?? []
 
+  // Eigen items van de viewer horen niet tussen "te ontdekken" items — voorheen deed de
+  // query dit met een `not_equals`-voorwaarde, nu gebeurt het hier zodat de query zelf
+  // niet meer op de viewer hoeft te wachten (zie hierboven).
+  const itemsDocs = viewer
+    ? itemsResRuw.docs.filter((item) => {
+        const eigenaarId = typeof item.eigenaar === 'object' ? item.eigenaar.id : item.eigenaar
+        return eigenaarId !== viewer.id
+      })
+    : itemsResRuw.docs
+
   const scoreMap = new Map<number, number>()
-  for (const item of itemsRes.docs) {
+  for (const item of itemsDocs) {
     scoreMap.set(
       item.id,
       berekenOntdekkenScore({ item, viewer, viewerEigenItems, zoektermen, categorieMap, config: matchConfig }),
     )
   }
 
-  const gefilterd = filterItems(itemsRes.docs, filters, categorieMap, viewer?.locatie_exact)
+  const gefilterd = filterItems(itemsDocs, filters, categorieMap, viewer?.locatie_exact)
+
+  // Tellingen voor ALLE categorieën (hoofd- én subniveau) — nodig voor zowel de
+  // zijbalk (hoofdcategorieën) als de zoeksuggesties (kunnen ook subcategorieën zijn).
+  const facetTellingen = berekenFacetTellingen(
+    itemsDocs,
+    filters,
+    categorieMap,
+    viewer?.locatie_exact,
+    categorieenRes.docs.map((c) => c.id),
+  )
+
+  const categorieSuggesties = categorieenRes.docs
+    .map((c) => {
+      const parentId = categorieIdVan(c.parent)
+      return {
+        id: c.id,
+        naam: c.naam,
+        parentNaam: parentId !== null ? (categorieMap.get(parentId)?.naam ?? null) : null,
+        aantal: facetTellingen.categorie[c.id] ?? 0,
+      }
+    })
+    .sort((a, b) => a.naam.localeCompare(b.naam, 'nl'))
 
   const gesorteerd = [...gefilterd].sort((a, b) => {
     if (filters.sort === 'nieuw') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -132,143 +173,52 @@ export default async function OntdekkenPage({
 
   return (
     <div className="pagina">
-      <form method="get" action="/">
-        <div className="ontdekken__topbar">
-          <div className="zoekbalk">
-            <span aria-hidden="true">🔍</span>
-            <input type="text" name="q" placeholder="bv. vintage camera" defaultValue={filters.q} />
-          </div>
-          <div className="sorteer-select">
-            Sorteren op:
-            <select name="sort" defaultValue={filters.sort}>
-              <option value="match">Beste match</option>
-              <option value="afstand">Afstand</option>
-              <option value="nieuw">Nieuwste eerst</option>
-            </select>
-          </div>
+      <Suspense fallback={<div className="ontdekken__topbar" />}>
+        <ZoekEnSorteer categorieSuggesties={categorieSuggesties} />
+      </Suspense>
+
+      <div className="ontdekken__layout">
+        <Suspense fallback={<aside className="filters" />}>
+          <FilterZijbalk
+            hoofdCategorieen={hoofdCategorieen}
+            tellingen={facetTellingen}
+            aantalResultaten={gesorteerd.length}
+          />
+        </Suspense>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {chips.length > 0 && (
+            <div className="actieve-filters">
+              {chips.map((chip) => (
+                <Link key={chip.label} href={chip.href} className="filter-chip">
+                  {chip.label} ×
+                </Link>
+              ))}
+              <Link href="/" className="filters-wissen">
+                Filters wissen
+              </Link>
+            </div>
+          )}
+
+          <div className="resultaten-count">{gesorteerd.length} resultaten</div>
+
+          {gesorteerd.length === 0 ? (
+            <div className="leeg-resultaat">Geen resultaten met deze filters.</div>
+          ) : (
+            <div className="product-grid">
+              {gesorteerd.map((item) => (
+                <ProductCard
+                  key={item.id}
+                  item={item}
+                  score={scoreMap.get(item.id) ?? 0}
+                  hogeMatchDrempel={hogeMatchDrempel}
+                  bezoekerLocatie={viewer?.locatie_exact}
+                />
+              ))}
+            </div>
+          )}
         </div>
-
-        <div className="ontdekken__layout">
-          <aside className="filters">
-            <div className="filters__titel">🔧 Filters</div>
-
-            <div className="filtergroep">
-              <div className="filtergroep__label">Categorie</div>
-              {hoofdCategorieen.map((c) => (
-                <label key={c.id} className="optie">
-                  <input
-                    type="checkbox"
-                    name="categorie"
-                    value={c.id}
-                    defaultChecked={filters.categorie.includes(String(c.id))}
-                  />
-                  {c.naam}
-                </label>
-              ))}
-            </div>
-
-            <div className="filtergroep">
-              <div className="filtergroep__label">Afstand</div>
-              {[
-                { waarde: '5', label: '< 5 km' },
-                { waarde: '15', label: '< 15 km' },
-                { waarde: '50', label: '< 50 km' },
-                { waarde: '', label: 'Heel Nederland' },
-              ].map((optie) => (
-                <label key={optie.waarde || 'alle'} className="optie">
-                  <input
-                    type="radio"
-                    name="afstand"
-                    value={optie.waarde}
-                    defaultChecked={(filters.afstand ?? '') === optie.waarde}
-                  />
-                  {optie.label}
-                </label>
-              ))}
-            </div>
-
-            <div className="filtergroep">
-              <div className="filtergroep__label">Ophalen of verzenden</div>
-              <div className="overdracht-toggle">
-                {[
-                  { waarde: '', label: 'Beide' },
-                  { waarde: 'ophalen', label: 'Ophalen' },
-                  { waarde: 'verzenden', label: 'Verzenden' },
-                ].map((optie) => (
-                  <label key={optie.waarde || 'beide'}>
-                    <input
-                      type="radio"
-                      name="overdracht"
-                      value={optie.waarde}
-                      defaultChecked={(filters.overdracht ?? '') === optie.waarde}
-                    />
-                    <span>{optie.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="filtergroep">
-              <div className="filtergroep__label">Staat</div>
-              {Object.entries(STAAT_LABELS).map(([waarde, label]) => (
-                <label key={waarde} className="optie">
-                  <input
-                    type="checkbox"
-                    name="staat"
-                    value={waarde}
-                    defaultChecked={filters.staat.includes(waarde)}
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-
-            <div className="filtergroep" style={{ borderBottom: 'none' }}>
-              <label className="optie">
-                <input type="checkbox" name="geverifieerd" value="1" defaultChecked={filters.geverifieerd} />
-                Alleen geverifieerde gebruikers
-              </label>
-            </div>
-
-            <button type="submit" className="swopla-btn swopla-btn--primair filters__toepassen">
-              Filters toepassen
-            </button>
-          </aside>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {chips.length > 0 && (
-              <div className="actieve-filters">
-                {chips.map((chip) => (
-                  <a key={chip.label} href={chip.href} className="filter-chip">
-                    {chip.label} ×
-                  </a>
-                ))}
-                <a href="/" className="filters-wissen">
-                  Filters wissen
-                </a>
-              </div>
-            )}
-
-            <div className="resultaten-count">{gesorteerd.length} resultaten</div>
-
-            {gesorteerd.length === 0 ? (
-              <div className="leeg-resultaat">Geen resultaten met deze filters.</div>
-            ) : (
-              <div className="product-grid">
-                {gesorteerd.map((item) => (
-                  <ProductCard
-                    key={item.id}
-                    item={item}
-                    score={scoreMap.get(item.id) ?? 0}
-                    hogeMatchDrempel={hogeMatchDrempel}
-                    bezoekerLocatie={viewer?.locatie_exact}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
   )
 }
