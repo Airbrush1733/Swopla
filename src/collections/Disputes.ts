@@ -8,6 +8,11 @@ import { getRelationId } from './hookUtils'
  * "zo min mogelijk notificaties"-uitgangspunt uit het concept). Gaat naar BEIDE
  * deelnemers van het onderliggende TradeProposal, niet alleen de indiener — de
  * uitkomst raakt beide partijen.
+ *
+ * `req` wordt overal meegegeven zodat deze aanroepen in dezelfde transactie
+ * blijven als de Dispute-wijziging zelf (anders kan de foreign key naar deze
+ * nog niet gecommitte Dispute-rij niet worden opgelost — zelfde bug als eerder
+ * bij TradeProposals, zie de toelichting daar).
  */
 const notificerenBijBeslissing: CollectionAfterChangeHook = async ({ doc, operation, previousDoc, req }) => {
   const wordtBeslist = operation === 'update' && doc.status === 'beslist' && previousDoc?.status !== 'beslist'
@@ -20,7 +25,7 @@ const notificerenBijBeslissing: CollectionAfterChangeHook = async ({ doc, operat
     return doc
   }
 
-  const voorstel = await req.payload.findByID({ collection: 'trade-proposals', id: voorstelId, depth: 0 })
+  const voorstel = await req.payload.findByID({ collection: 'trade-proposals', id: voorstelId, depth: 0, req })
   const idA = getRelationId(voorstel?.deelnemer_a)
   const idB = getRelationId(voorstel?.deelnemer_b)
   const ontvangers = [idA, idB].filter((id): id is number => typeof id === 'number')
@@ -35,6 +40,7 @@ const notificerenBijBeslissing: CollectionAfterChangeHook = async ({ doc, operat
         ontvanger,
         tekst: `Geschil #${doc.id} is beslist.`,
       },
+      req,
     })
   }
 

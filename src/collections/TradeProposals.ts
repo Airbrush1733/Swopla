@@ -1,4 +1,4 @@
-import type { CollectionAfterChangeHook, CollectionBeforeChangeHook, CollectionConfig, Payload } from 'payload'
+import type { CollectionAfterChangeHook, CollectionBeforeChangeHook, CollectionConfig, PayloadRequest } from 'payload'
 
 import { getRelationId } from './hookUtils'
 
@@ -42,7 +42,10 @@ const checkVerificatie: CollectionBeforeChangeHook = async ({ data, operation, r
 
   for (const id of [idA, idB]) {
     if (!id) continue
-    const user = await req.payload.findByID({ collection: 'users', id, depth: 0 })
+    // req meegeven zodat deze read binnen dezelfde transactie blijft als de
+    // rest van deze operatie (zie notificerenEnTrackrecordBijwerken hieronder
+    // voor waarom dat hier belangrijk is).
+    const user = await req.payload.findByID({ collection: 'users', id, depth: 0, req })
     if (!user?.geverifieerd_email || !user?.geverifieerd_telefoon) {
       throw new Error(
         `Beide deelnemers moeten e-mail én telefoon geverifieerd hebben voordat een ruilvoorstel gestart of geaccepteerd kan worden (gebruiker ${id} voldoet nog niet).`,
@@ -56,18 +59,26 @@ const checkVerificatie: CollectionBeforeChangeHook = async ({ data, operation, r
 /**
  * Verhoogt één trackrecord-teller op Users met 1 (besloten, zie
  * technische-architectuur-schets.md → "Bouwstatus").
+ *
+ * BELANGRIJK: `req` moet meegegeven worden aan zowel findByID als update, zodat
+ * deze aanroepen in dezelfde database-transactie draaien als de TradeProposals-
+ * wijziging die dit triggert. Zonder `req` start Payload een eigen transactie
+ * die de nog niet gecommitte TradeProposals-rij niet kan zien, wat leidde tot
+ * een foreign-key-fout bij het testen (zie Notifications hieronder — zelfde
+ * probleem, zelfde fix).
  */
 async function verhoogTrackrecordTeller(
-  payload: Payload,
+  req: PayloadRequest,
   userId: number,
   veld: 'ingetrokken_of_geweigerd' | 'voltooide_ruilen',
 ): Promise<void> {
-  const user = await payload.findByID({ collection: 'users', id: userId, depth: 0 })
+  const user = await req.payload.findByID({ collection: 'users', id: userId, depth: 0, req })
   const huidigeWaarde = typeof user?.[veld] === 'number' ? (user[veld] as number) : 0
-  await payload.update({
+  await req.payload.update({
     collection: 'users',
     id: userId,
     data: { [veld]: huidigeWaarde + 1 },
+    req,
   })
 }
 
@@ -101,6 +112,9 @@ const notificerenEnTrackrecordBijwerken: CollectionAfterChangeHook = async ({
   const deelnemers = [idA, idB].filter((id): id is number => typeof id === 'number')
 
   for (const ontvanger of deelnemers) {
+    // req meegeven: dit TradeProposal (doc.id) is binnen deze operatie nog niet
+    // gecommit, dus de foreign key naar trade-proposals moet in dezelfde
+    // transactie blijven om die rij te kunnen zien.
     await req.payload.create({
       collection: 'notifications',
       data: {
@@ -110,21 +124,22 @@ const notificerenEnTrackrecordBijwerken: CollectionAfterChangeHook = async ({
         ontvanger,
         tekst: `Ruilvoorstel #${doc.id}: status gewijzigd naar "${STATUS_LABELS[doc.status as string] ?? doc.status}".`,
       },
+      req,
     })
   }
 
   if (doc.status === 'voltooid') {
     for (const id of deelnemers) {
-      await verhoogTrackrecordTeller(req.payload, id, 'voltooide_ruilen')
+      await verhoogTrackrecordTeller(req, id, 'voltooide_ruilen')
     }
   } else if (doc.status === 'verlopen') {
     for (const id of deelnemers) {
-      await verhoogTrackrecordTeller(req.payload, id, 'ingetrokken_of_geweigerd')
+      await verhoogTrackrecordTeller(req, id, 'ingetrokken_of_geweigerd')
     }
   } else if (doc.status === 'ingetrokken') {
     const actorId = getRelationId(req.user)
     if (typeof actorId === 'number' && deelnemers.includes(actorId)) {
-      await verhoogTrackrecordTeller(req.payload, actorId, 'ingetrokken_of_geweigerd')
+      await verhoogTrackrecordTeller(req, actorId, 'ingetrokken_of_geweigerd')
     }
   }
 
