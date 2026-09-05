@@ -1,164 +1,688 @@
-:root {
-  --font-mono: 'Roboto Mono', monospace;
-}
+/* Swopla — brand foundation, overgenomen uit de klikbare mockup (Main.dc.html). */
 
 * {
   box-sizing: border-box;
 }
 
-html {
-  font-size: 18px;
-  line-height: 32px;
-
-  background: rgb(0, 0, 0);
-  -webkit-font-smoothing: antialiased;
+:root {
+  --swopla-groen: oklch(58% 0.15 150);
+  --swopla-groen-hover: oklch(44% 0.15 150);
+  --swopla-groen-donker: oklch(42% 0.13 150);
+  --swopla-groen-tint: oklch(90% 0.06 150);
+  --swopla-geel: oklch(70% 0.15 95);
+  --swopla-tekst: oklch(20% 0.02 150);
+  --swopla-grijs: oklch(45% 0.02 150);
+  --swopla-grijs-licht: oklch(58% 0.03 150);
+  --swopla-rand: oklch(89% 0.02 90);
+  --swopla-achtergrond: oklch(99% 0.004 90);
+  --swopla-vlak: oklch(95% 0.01 90);
+  --swopla-amber-bg: oklch(97% 0.03 55);
+  --swopla-amber-rand: oklch(88% 0.05 55);
+  --swopla-amber: oklch(65% 0.14 55);
+  --swopla-rood: oklch(55% 0.16 25);
 }
 
 html,
-body,
-#app {
+body {
   height: 100%;
 }
 
 body {
-  font-family: system-ui;
-  font-size: 18px;
-  line-height: 32px;
-
   margin: 0;
-  color: rgb(1000, 1000, 1000);
+  background: var(--swopla-achtergrond);
+  font-family: 'Nunito', system-ui, sans-serif;
+  color: var(--swopla-tekst);
+  -webkit-font-smoothing: antialiased;
+}
 
-  @media (max-width: 1024px) {
-    font-size: 15px;
-    line-height: 24px;
-  }
+h1,
+h2,
+h3 {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  margin: 0;
+}
+
+a {
+  color: var(--swopla-groen);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--swopla-groen-hover);
 }
 
 img {
   max-width: 100%;
-  height: auto;
   display: block;
 }
 
-h1 {
-  margin: 40px 0;
-  font-size: 64px;
-  line-height: 70px;
-  font-weight: bold;
-
-  @media (max-width: 1024px) {
-    margin: 24px 0;
-    font-size: 42px;
-    line-height: 42px;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 38px;
-    line-height: 38px;
-  }
-
-  @media (max-width: 400px) {
-    font-size: 32px;
-    line-height: 32px;
-  }
+button {
+  font-family: inherit;
+  cursor: pointer;
 }
 
-p {
-  margin: 24px 0;
-
-  @media (max-width: 1024px) {
-    margin: calc(var(--base) * 0.75) 0;
-  }
+.swopla-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
 }
 
-a {
-  color: currentColor;
-
-  &:focus {
-    opacity: 0.8;
-    outline: none;
-  }
-
-  &:active {
-    opacity: 0.7;
-    outline: none;
-  }
+.swopla-btn--primair {
+  background: var(--swopla-groen);
+  color: #fff;
 }
 
-svg {
-  vertical-align: middle;
+.swopla-btn--primair:hover {
+  background: var(--swopla-groen-hover);
+  color: #fff;
 }
 
-.home {
+.swopla-btn--outline {
+  background: #fff;
+  color: var(--swopla-tekst);
+  border: 1px solid var(--swopla-rand);
+}
+
+/* --- Nav --- */
+
+.nav {
+  height: 72px;
+  background: #fff;
+  border-bottom: 1px solid var(--swopla-rand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav__inner {
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav__logo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 25px;
+  color: var(--swopla-tekst);
+}
+
+.nav__logo:hover {
+  color: var(--swopla-tekst);
+}
+
+.nav__rechts {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.nav__link {
+  color: var(--swopla-tekst);
+  position: relative;
+}
+
+.nav__viewer-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav__viewer-form select {
+  border: 1px solid var(--swopla-rand);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  background: var(--swopla-vlak);
+  color: var(--swopla-tekst);
+}
+
+.nav__viewer-form button {
+  border: 1px solid var(--swopla-rand);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.nav__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--swopla-groen);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* --- Layout --- */
+
+.pagina {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 40px 64px;
+}
+
+.terug-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* --- Ontdekken: zoekbalk + sortering --- */
+
+.ontdekken__topbar {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.zoekbalk {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--swopla-vlak);
+  border-radius: 999px;
+  padding: 12px 18px;
+}
+
+.zoekbalk input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  color: var(--swopla-tekst);
+}
+
+.sorteer-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--swopla-rand);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.sorteer-select select {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--swopla-tekst);
+  outline: none;
+}
+
+/* --- Ontdekken: layout + filters --- */
+
+.ontdekken__layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.filters {
+  width: 252px;
+  flex-shrink: 0;
+}
+
+.filters__titel {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.filtergroep {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--swopla-rand);
+}
+
+.filtergroep:first-of-type {
+  padding-top: 0;
+}
+
+.filtergroep__label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--swopla-grijs);
+  margin-bottom: 10px;
+}
+
+.filtergroep label.optie {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.overdracht-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.overdracht-toggle label {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 999px;
+  border: 1px solid var(--swopla-rand);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.overdracht-toggle input {
+  display: none;
+}
+
+.overdracht-toggle input:checked + span {
+  color: var(--swopla-groen-donker);
+}
+
+.overdracht-toggle label:has(input:checked) {
+  background: var(--swopla-groen-tint);
+  border-color: transparent;
+  color: var(--swopla-groen-donker);
+}
+
+.filters__toepassen {
+  margin-top: 16px;
+  width: 100%;
+}
+
+/* --- Actieve filters + resultaten --- */
+
+.actieve-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--swopla-rand);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.filter-chip:hover {
+  color: var(--swopla-tekst);
+}
+
+.filters-wissen {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.resultaten-count {
+  font-size: 14px;
+  color: var(--swopla-grijs);
+  margin-bottom: 16px;
+}
+
+/* --- Productgrid & kaarten --- */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.product-kaart {
+  background: #fff;
+  border: 1px solid var(--swopla-rand);
+  border-radius: 12px;
+  overflow: hidden;
+  display: block;
+  color: var(--swopla-tekst);
+}
+
+.product-kaart:hover {
+  color: var(--swopla-tekst);
+  border-color: var(--swopla-groen);
+}
+
+.product-kaart__afbeelding {
+  position: relative;
+  height: 150px;
+  background: linear-gradient(135deg, oklch(94% 0.03 95), oklch(90% 0.03 95));
+}
+
+.product-kaart__afbeelding img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.match-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--swopla-grijs-licht);
+  color: oklch(35% 0.03 150);
+}
+
+.match-badge--hoog {
+  background: var(--swopla-groen);
+  color: #fff;
+}
+
+.product-kaart__body {
+  padding: 14px;
+}
+
+.product-kaart__titel {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.product-kaart__sub {
+  font-size: 12px;
+  color: var(--swopla-grijs-licht);
+}
+
+.leeg-resultaat {
+  padding: 40px 0;
+  color: var(--swopla-grijs);
+  font-size: 14px;
+}
+
+/* --- Productdetail --- */
+
+.detail {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.detail__media {
+  flex: 1.15;
+}
+
+.detail__hoofdfoto {
+  height: 380px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--swopla-vlak);
+}
+
+.detail__hoofdfoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail__thumbs {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.detail__thumb {
+  width: 78px;
+  height: 78px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--swopla-vlak);
+  border: 2px solid transparent;
+}
+
+.detail__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.detail__info {
+  flex: 1;
+}
+
+.detail__titelrij {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.detail__titelrij h1 {
+  font-size: 24px;
+}
+
+.detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--swopla-grijs);
+  margin-bottom: 16px;
+}
+
+.detail__infostrip {
+  display: flex;
+  border: 1px solid var(--swopla-rand);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.detail__infostrip > div {
+  flex: 1;
+  padding: 12px 14px;
+  border-right: 1px solid var(--swopla-rand);
+}
+
+.detail__infostrip > div:last-child {
+  border-right: none;
+}
+
+.detail__infostrip .label {
+  font-size: 11px;
+  color: var(--swopla-grijs-licht);
+  margin-bottom: 2px;
+}
+
+.detail__infostrip .waarde {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.detail__beschrijving {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.ai-tip {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--swopla-amber-bg);
+  border: 1px solid var(--swopla-amber-rand);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.ai-tip__badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--swopla-amber);
+  flex-shrink: 0;
+}
+
+.aanbieder-kaart {
+  max-width: 480px;
+  border-top: 1px solid var(--swopla-rand);
+  padding-top: 20px;
+  margin-top: 28px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 10px;
+}
+
+.aanbieder-kaart__rij {
+  display: flex;
   align-items: center;
-  height: 100vh;
-  padding: 45px;
-  max-width: 1024px;
-  margin: 0 auto;
-  overflow: hidden;
+  gap: 12px;
+}
 
-  @media (max-width: 400px) {
-    padding: 24px;
-  }
+.aanbieder-kaart__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: oklch(55% 0.13 280);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+}
 
-  .content {
-    display: flex;
+.geverifieerd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--swopla-groen-tint);
+  color: var(--swopla-groen-donker);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.ruilkansen {
+  margin-top: 28px;
+  border: 1px solid var(--swopla-rand);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.ruilkansen__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ruilkansen__header h2 {
+  font-size: 18px;
+}
+
+.marieke-pill {
+  background: var(--swopla-groen);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+
+.ruilkansen__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.ruilkans-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--swopla-rand);
+  border-radius: 999px;
+  padding: 6px 12px 6px 6px;
+  font-size: 13px;
+  color: var(--swopla-tekst);
+}
+
+.ruilkans-chip img {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.ruilkans-chip__pct {
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--swopla-vlak);
+  color: var(--swopla-grijs);
+}
+
+.ruilkans-chip__pct--hoog {
+  background: var(--swopla-groen-tint);
+  color: var(--swopla-groen-donker);
+}
+
+.niet-ingelogd-melding {
+  border: 1px dashed var(--swopla-rand);
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 14px;
+  color: var(--swopla-grijs);
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .ontdekken__layout,
+  .detail {
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-grow: 1;
-
-    h1 {
-      text-align: center;
-    }
   }
 
-  .links {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    a {
-      text-decoration: none;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-    }
-
-    .admin {
-      color: rgb(0, 0, 0);
-      background: rgb(1000, 1000, 1000);
-      border: 1px solid rgb(0, 0, 0);
-    }
-
-    .docs {
-      color: rgb(1000, 1000, 1000);
-      background: rgb(0, 0, 0);
-      border: 1px solid rgb(1000, 1000, 1000);
-    }
+  .filters {
+    width: 100%;
   }
 
-  .footer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    @media (max-width: 1024px) {
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    p {
-      margin: 0;
-    }
-
-    .codeLink {
-      text-decoration: none;
-      padding: 0 0.5rem;
-      background: rgb(60, 60, 60);
-      border-radius: 4px;
-    }
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
