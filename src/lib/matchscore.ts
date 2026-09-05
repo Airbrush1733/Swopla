@@ -10,12 +10,12 @@ import {
 } from './categorieHelpers'
 
 /**
- * Matchscore-berekeningen (Ontdekken-score, Productmatch, Marieke-match) — zie
+ * Matchscore-berekeningen (Ontdekken-score, Productmatch, Marieke-match). Zie
  * concept-samenvatting.md → "Matching" en technische-architectuur-schets.md voor het
  * besloten model. De GEWICHTEN komen uit het configureerbare `match-score-config`-global
- * (nooit hardcoded — besloten projectregel). De sub-formules hieronder (afstandcurve,
+ * (nooit hardcoded, besloten projectregel). De sub-formules hieronder (afstandcurve,
  * betrouwbaarheids- en sociaal-normalisatie) zijn wél een eigen, pragmatische v1-invulling:
- * de weegrichting staat vast, de exacte curve niet — net als de gewichten zelf ("richting
+ * de weegrichting staat vast, de exacte curve niet, net als de gewichten zelf ("richting
  * staat vast, getal nog niet", zie MatchScoreConfig-adminomschrijving). Bewust niet aan
  * Ralph voorgelegd als aparte keuze omdat elk redelijk alternatief via dezelfde
  * configureerbare gewichten later bijgesteld kan worden zonder schemawijziging.
@@ -49,14 +49,16 @@ export function berekenOntdekkenScore(input: OntdekkenScoreInput): number {
   const itemKeten = inKeten(categorieIdVan(item.categorie), categorieMap)
   let score = 0
 
-  // 1. Interesses — breedste, meest passieve signaal (ook de terugval)
+  // 1. Interesses: breedste, meest passieve signaal (ook de terugval)
   const interesseIds = (viewer.interesses ?? [])
     .map(categorieIdVan)
     .filter((id): id is number => id !== null)
-  const interesseMatch = interesseIds.some((id) => ketensOverlappen(inKeten(id, categorieMap), itemKeten))
+  const interesseMatch = interesseIds.some((id) =>
+    ketensOverlappen(inKeten(id, categorieMap), itemKeten),
+  )
   if (interesseMatch) score += config.gewicht_ontdekken_interesses ?? 0
 
-  // 2. Zoekgeschiedenis — actueel, specifiek zoekgedrag
+  // 2. Zoekgeschiedenis: actueel, specifiek zoekgedrag
   const categorieNaam = categorieMap.get(categorieIdVan(item.categorie) ?? -1)?.naam ?? ''
   const doorzoekbaar = `${item.titel} ${item.beschrijving} ${categorieNaam}`.toLowerCase()
   const zoekMatch = zoektermen.some((term) => {
@@ -65,7 +67,7 @@ export function berekenOntdekkenScore(input: OntdekkenScoreInput): number {
   })
   if (zoekMatch) score += config.gewicht_ontdekken_zoekgeschiedenis ?? 0
 
-  // 3. Gewenst-terug — meest actief/specifiek, tweerichtingsmechanisme (zie concept-
+  // 3. Gewenst-terug: meest actief/specifiek, tweerichtingsmechanisme (zie concept-
   //    samenvatting.md): matcht hier andermans item tegen wat de bezoeker zelf terugwil.
   const gewenstTerugId = categorieIdVan(item.gewenst_terug)
   if (gewenstTerugId !== null) {
@@ -81,12 +83,15 @@ export function berekenOntdekkenScore(input: OntdekkenScoreInput): number {
 }
 
 // ---------------------------------------------------------------------------
-// Productmatch (item-gebonden) — per kandidaat-item uit de eigen shop van de bezoeker
+// Productmatch (item-gebonden): per kandidaat-item uit de eigen shop van de bezoeker
 // ---------------------------------------------------------------------------
 
 const WAARDE_RANG: Record<ShopItem['waarde_indicatie'], number> = { laag: 0, midden: 1, hoog: 2 }
 
-function waardeBalansScore(a: ShopItem['waarde_indicatie'], b: ShopItem['waarde_indicatie']): number {
+function waardeBalansScore(
+  a: ShopItem['waarde_indicatie'],
+  b: ShopItem['waarde_indicatie'],
+): number {
   const verschil = Math.abs(WAARDE_RANG[a] - WAARDE_RANG[b])
   if (verschil === 0) return 1
   if (verschil === 1) return 0.5
@@ -101,7 +106,7 @@ export interface ProductmatchInput {
 }
 
 /**
- * Percentage voor één kandidaat-item van de bezoeker t.o.v. het bekeken item — getoond
+ * Percentage voor één kandidaat-item van de bezoeker t.o.v. het bekeken item, getoond
  * per chip in de Ruilkansen-sectie. Specifiek (gewenst_terug ingevuld) weegt zwaarder dan
  * algemeen (categorie/Interesses-overlap), zoals besloten.
  */
@@ -123,7 +128,10 @@ export function berekenProductmatch(input: ProductmatchInput): number {
   }
 
   const staatWaardeGewicht = config.gewicht_staat_en_waarde ?? 0
-  const staatWaardeScore = waardeBalansScore(bekekenItem.waarde_indicatie, kandidaat.waarde_indicatie)
+  const staatWaardeScore = waardeBalansScore(
+    bekekenItem.waarde_indicatie,
+    kandidaat.waarde_indicatie,
+  )
 
   const maxMogelijk = overlapGewicht + staatWaardeGewicht
   if (maxMogelijk === 0) return 0
@@ -133,7 +141,7 @@ export function berekenProductmatch(input: ProductmatchInput): number {
 }
 
 // ---------------------------------------------------------------------------
-// Marieke-match (persoons-/shopgebonden) — bezoeker t.o.v. de aanbieder
+// Marieke-match (persoons-/shopgebonden): bezoeker t.o.v. de aanbieder
 // ---------------------------------------------------------------------------
 
 export interface MariekeMatchInput {
@@ -148,7 +156,7 @@ export interface MariekeMatchInput {
 function betrouwbaarheidScore(gebruiker: User): number {
   const voltooid = gebruiker.voltooide_ruilen ?? 0
   const ingetrokken = gebruiker.ingetrokken_of_geweigerd ?? 0
-  if (voltooid + ingetrokken === 0) return 0.5 // neutraal — nog geen trackrecord
+  if (voltooid + ingetrokken === 0) return 0.5 // neutraal, nog geen trackrecord
   return voltooid / (voltooid + ingetrokken)
 }
 
@@ -202,8 +210,9 @@ export function berekenMariekeMatch(input: MariekeMatchInput): number {
   const km = afstandKm(bezoeker.locatie_exact, aanbieder.locatie_exact)
   if (locatieGewicht > 0 && km !== null && aanbiederItems.length > 0) {
     const verzendAandeel =
-      aanbiederItems.filter((i) => i.overdracht.includes('verzenden') && !i.overdracht.includes('ophalen'))
-        .length / aanbiederItems.length
+      aanbiederItems.filter(
+        (i) => i.overdracht.includes('verzenden') && !i.overdracht.includes('ophalen'),
+      ).length / aanbiederItems.length
     const verzendKorting = (config.locatie_weging_ophalen_vs_verzenden ?? 50) / 100
     const effectiefGewicht = locatieGewicht * (1 - verzendAandeel * verzendKorting)
     const afstandScore = Math.max(0, 1 - km / 50)
@@ -225,7 +234,7 @@ export function berekenMariekeMatch(input: MariekeMatchInput): number {
     maxMogelijk += sociaalGewicht
   }
 
-  // Reviews: nog niet gebouwd (v1, "optioneel, mag later") — telt alleen mee als er ooit
+  // Reviews: nog niet gebouwd (v1, "optioneel, mag later"). Telt alleen mee als er ooit
   // een gewicht > 0 aan gegeven wordt, dan pas heeft dit stuk verdere invulling nodig.
 
   if (maxMogelijk === 0) return 0

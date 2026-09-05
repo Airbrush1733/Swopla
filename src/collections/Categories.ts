@@ -43,7 +43,7 @@ export const Categories: CollectionConfig = {
       admin: {
         description: 'Optioneel. Leeg = hoofdcategorie.',
         // In de lijst toont deze kolom het aantal subcategorieën i.p.v. de
-        // ruwe parent-relatie — die is al zichtbaar via de insprong/pijltjes
+        // ruwe parent-relatie, die is al zichtbaar via de insprong/pijltjes
         // in de naam-kolom. Verandert niets aan dit veld in het bewerkscherm,
         // alleen aan de kolomweergave in de lijst.
         components: {

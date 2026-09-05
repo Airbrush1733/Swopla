@@ -7,7 +7,7 @@
 //   zijn eigen rij, niet de rest van de tabel)
 // Gebruikt door CategoryNameCell.tsx (insprong/pijltje/toggle) en
 // CategoryChildCountCell.tsx (aantal subcategorieën i.p.v. de ruwe parent-waarde).
-// Bewust geen persistentie (localStorage) — reset bij een pagina-refresh,
+// Bewust geen persistentie (localStorage). Reset bij een pagina-refresh,
 // dat is prima voor dit soort simpele weergavegemak.
 
 type Id = string
@@ -47,7 +47,7 @@ export function registerRow(id: Id, parentId: Id | null): () => void {
   }
 }
 
-// Directe kind-id's van een categorie (niet recursief) — gebruikt door
+// Directe kind-id's van een categorie (niet recursief), gebruikt door
 // CategoryProductCountCell.tsx om het aantal producten van subcategorieën
 // mee te tellen bij een hoofdcategorie.
 export function getChildIds(id: Id): Id[] {

@@ -5,11 +5,9 @@ import React from 'react'
 import { initialenVan } from '@/lib/format'
 import { bouwCategorieMap } from '@/lib/categorieHelpers'
 import { berekenMariekeMatch, berekenProductmatch } from '@/lib/matchscore'
-import { STAAT_LABELS } from '@/lib/ontdekkenFilters'
+import { STAAT_LABELS, WAARDE_LABELS } from '@/lib/ontdekkenFilters'
 import { getPayloadClient, getViewer } from '@/lib/viewer'
 import type { Media, ShopItem, User } from '@/payload-types'
-
-const WAARDE_LABELS: Record<string, string> = { laag: 'Laag', midden: 'Midden', hoog: 'Hoog' }
 
 function overdrachtLabel(overdracht: ShopItem['overdracht']): string {
   if (overdracht.includes('ophalen') && overdracht.includes('verzenden'))
@@ -36,34 +34,53 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const eigenaar = typeof item.eigenaar === 'object' ? (item.eigenaar as User) : null
   const isEigenItem = viewer !== null && eigenaar !== null && viewer.id === eigenaar.id
 
-  const [categorieenRes, matchConfig, aanbiederItemsRes, viewerItemsRes] = await Promise.all([
-    payload.find({ collection: 'categories', limit: 200, depth: 0 }),
-    payload.findGlobal({ slug: 'match-score-config' }),
-    eigenaar
-      ? payload.find({
-          collection: 'shop-items',
-          where: {
-            and: [
-              { eigenaar: { equals: eigenaar.id } },
-              { status: { equals: 'beschikbaar' } },
-              { id: { not_equals: item.id } },
-            ],
-          },
-          depth: 1,
-          limit: 50,
-        })
-      : Promise.resolve(null),
-    viewer && !isEigenItem
-      ? payload.find({
-          collection: 'shop-items',
-          where: {
-            and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }],
-          },
-          depth: 1,
-          limit: 50,
-        })
-      : Promise.resolve(null),
-  ])
+  // Elke weergave van een niet-eigen item wordt gelogd (zie ItemViews.ts) -- behalve
+  // wanneer je je eigen item bekijkt, anders blaast eigen bezoek de eigen telling op.
+  // Best-effort: een mislukte log mag de paginaweergave nooit blokkeren.
+  const moetLoggen = !isEigenItem
+
+  const [categorieenRes, matchConfig, aanbiederItemsRes, viewerItemsRes, , weergavenTellingRes] =
+    await Promise.all([
+      payload.find({ collection: 'categories', limit: 200, depth: 0 }),
+      payload.findGlobal({ slug: 'match-score-config' }),
+      eigenaar
+        ? payload.find({
+            collection: 'shop-items',
+            where: {
+              and: [
+                { eigenaar: { equals: eigenaar.id } },
+                { status: { equals: 'beschikbaar' } },
+                { id: { not_equals: item.id } },
+              ],
+            },
+            depth: 1,
+            limit: 50,
+          })
+        : Promise.resolve(null),
+      viewer && !isEigenItem
+        ? payload.find({
+            collection: 'shop-items',
+            where: {
+              and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }],
+            },
+            depth: 1,
+            limit: 50,
+          })
+        : Promise.resolve(null),
+      moetLoggen
+        ? payload
+            .create({
+              collection: 'item-views',
+              data: { item: item.id, ...(viewer ? { kijker: viewer.id } : {}) },
+            })
+            .catch(() => null)
+        : Promise.resolve(null),
+      payload
+        .count({ collection: 'item-views', where: { item: { equals: item.id } } })
+        .catch(() => null),
+    ])
+
+  const weergavenTotaal = (weergavenTellingRes?.totalDocs ?? 0) + (moetLoggen ? 1 : 0)
 
   const categorieMap = bouwCategorieMap(categorieenRes.docs)
   const aanbiederItems = aanbiederItemsRes?.docs ?? []
@@ -147,6 +164,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <div className="detail__meta">
               {eigenaar?.locatie_ruw && <span>📍 {eigenaar.locatie_ruw}</span>}
               <span>🏷️ {categorieNaam}</span>
+              <span>👁️ {weergavenTotaal} keer bekeken</span>
             </div>
 
             <div className="detail__infostrip">
@@ -173,7 +191,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 <div className="ai-tip__badge" aria-hidden="true" />
                 <div>
                   AI-tip: &quot;{besteRuilkans.kandidaat.titel}&quot; uit jouw shop is de beste
-                  match hieronder bij Ruilkansen — voeg toe en verhoog je ruilkans.
+                  match hieronder bij Ruilkansen. Voeg toe en verhoog je ruilkans.
                 </div>
               </div>
             )}

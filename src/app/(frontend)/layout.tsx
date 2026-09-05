@@ -5,7 +5,7 @@ import Nav from '@/components/Nav'
 import './styles.css'
 
 export const metadata = {
-  description: 'Swopla — ruil je spullen, zonder geld.',
+  description: 'Swopla: ruil je spullen, zonder geld.',
   title: 'Swopla',
 }
 

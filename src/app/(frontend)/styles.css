@@ -1,4 +1,4 @@
-/* Swopla — brand foundation, overgenomen uit de klikbare mockup (Main.dc.html). */
+/* Swopla: brand foundation, overgenomen uit de klikbare mockup (Main.dc.html). */
 
 * {
   box-sizing: border-box;
@@ -259,6 +259,17 @@ button {
   list-style: none;
   margin: 0;
   padding: 6px;
+  overflow-y: auto;
+}
+
+/* Gebruikt door CategoriePicker: t.o.v. de viewport gepositioneerd (niet t.o.v. het veld),
+   met top/bottom/left/width/maxHeight inline gezet door berekenZwevendePositie() -- kan dus
+   ook boven het veld verschijnen als daar meer ruimte is. right:0 van de basisregel zou dat
+   doorkruisen, vandaar de reset hieronder. */
+.zoek-suggesties--zwevend {
+  position: fixed;
+  right: auto;
+  z-index: 300;
   max-height: 320px;
   overflow-y: auto;
 }
@@ -716,6 +727,166 @@ button {
 
 /* --- Productdetail --- */
 
+/* --- Mijn Shop --- */
+
+.mijn-shop__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mijn-shop__topbar h1 {
+  font-size: 22px;
+}
+
+.mijn-shop__layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.status-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: oklch(100% 0 0 / 0.92);
+  color: var(--swopla-grijs);
+  box-shadow: 0 1px 3px oklch(0% 0 0 / 0.15);
+}
+
+.status-badge--beschikbaar {
+  background: var(--swopla-groen-tint);
+  color: var(--swopla-groen-donker);
+}
+
+.status-badge--in_onderhandeling {
+  background: var(--swopla-amber-bg);
+  color: var(--swopla-amber);
+}
+
+.status-badge--geruild {
+  background: var(--swopla-vlak);
+  color: var(--swopla-grijs);
+}
+
+.status-badge--ingetrokken {
+  background: oklch(95% 0.02 25);
+  color: var(--swopla-rood);
+}
+
+.inzichten {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inzichten__titel {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.inzichten-kaart {
+  background: #fff;
+  border: 1px solid var(--swopla-rand);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.inzichten-kaart__label {
+  font-size: 12px;
+  color: var(--swopla-grijs-licht);
+  margin-bottom: 6px;
+}
+
+.inzichten-kaart__cijfer {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+}
+
+.inzichten-kaart__trend {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--swopla-grijs-licht);
+  margin-top: 4px;
+}
+
+.inzichten-kaart__trend--positief {
+  color: var(--swopla-groen-donker);
+}
+
+.inzichten-kaart__trend--negatief {
+  color: var(--swopla-rood);
+}
+
+.inzichten-kaart__sub {
+  font-size: 12px;
+  color: var(--swopla-grijs-licht);
+  margin-top: 4px;
+}
+
+.inzichten-kaart__link {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--swopla-tekst);
+  display: block;
+}
+
+.inzichten-kaart__link:hover {
+  color: var(--swopla-groen-hover);
+}
+
+.inzichten-kaart__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.categorie-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--swopla-vlak);
+  color: var(--swopla-tekst);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+@media (max-width: 1024px) {
+  .mijn-shop__layout {
+    flex-direction: column-reverse;
+  }
+
+  .inzichten {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .inzichten-kaart {
+    flex: 1 1 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .mijn-shop__topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* --- Productdetail --- */
+
 .detail__kaart {
   background: #fff;
   border: 1px solid var(--swopla-rand);
@@ -1009,4 +1180,280 @@ button {
   .product-grid {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
+}
+
+/* --- Item toevoegen --- */
+
+.pagina--smal {
+  max-width: 680px;
+}
+
+.titel-ster {
+  color: var(--swopla-geel);
+  font-size: 0.65em;
+  vertical-align: middle;
+}
+
+.pagina__intro {
+  color: var(--swopla-grijs);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.item-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-top: 28px;
+}
+
+/* Bewust GEEN kaart/border per vraag -- rust komt hier uit ruime, consistente afstand
+   tussen de vragen en één stijl per antwoordtype, niet uit losse omkaderde vakjes
+   (zie de mockup: gewoon label + veld, met lucht ertussen). */
+.veld {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.veld__label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.veld__hint {
+  font-size: 12px;
+  color: var(--swopla-grijs-licht);
+  margin-top: -4px;
+}
+
+/* Geaccentueerde variant voor een veld dat écht opvalt moet -- nu alleen "wat wil je
+   hiervoor terug" (zie GewenstTerugVeld.tsx), het zwaarste matchscore-signaal per item. */
+.veld--nadruk {
+  background: var(--swopla-groen-tint);
+  border: 1px solid var(--swopla-groen);
+  border-radius: 16px;
+  padding: 20px 22px;
+}
+
+.veld__nadruk-kop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.veld--nadruk .veld__label {
+  font-size: 15px;
+}
+
+.veld--nadruk .veld__hint {
+  color: var(--swopla-groen-donker);
+  opacity: 0.85;
+}
+
+.item-form input[type='text'],
+.item-form textarea {
+  border: 1px solid var(--swopla-rand);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--swopla-tekst);
+  background: #fff;
+  outline: none;
+  width: 100%;
+}
+
+.item-form input[type='text']:focus,
+.item-form textarea:focus {
+  border-color: var(--swopla-groen);
+}
+
+.item-form textarea {
+  resize: vertical;
+}
+
+/* Eén herbruikbare pil-stijl voor elke meerkeuze-vraag (Staat, Waarde-indicatie,
+   Overdracht) -- bewust dezelfde opmaak voor alledrie, i.p.v. de ene een dropdown en de
+   andere knoppen, zoals in de mockup. */
+.keuze-pillen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.keuze-pil {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--swopla-rand);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--swopla-tekst);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.keuze-pil input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.keuze-pil:has(input:checked) {
+  background: var(--swopla-groen-tint);
+  border-color: var(--swopla-groen);
+  color: var(--swopla-groen-donker);
+  font-weight: 700;
+}
+
+/* Categorie-picker: ziet er in rust uit als een gewone dropdown (doos + chevron), wordt bij
+   een klik een zoekveld -- zie CategoriePicker.tsx. */
+.select-veld {
+  position: relative;
+}
+
+.select-veld__doos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid var(--swopla-rand);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--swopla-tekst);
+  text-align: left;
+  cursor: pointer;
+}
+
+.select-veld__doos:focus-within {
+  border-color: var(--swopla-groen);
+}
+
+.select-veld__doos--bewerken {
+  cursor: text;
+}
+
+.select-veld__doos--bewerken input {
+  border: none;
+  outline: none;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+  width: 100%;
+  color: var(--swopla-tekst);
+}
+
+.select-veld__placeholder {
+  color: var(--swopla-grijs-licht);
+}
+
+.select-veld__chevron {
+  color: var(--swopla-grijs-licht);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.alles-mag-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--swopla-groen-donker);
+  cursor: pointer;
+}
+
+.alles-mag-checkbox input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--swopla-groen);
+  cursor: pointer;
+}
+
+/* Foto-upload: één rustige sleep-of-klik-dropzone (zoals de mockup), geen los technisch
+   bestandsveld. Gekozen foto's tonen als kleine thumbnails eronder. */
+.foto-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px dashed var(--swopla-rand);
+  border-radius: 14px;
+  padding: 40px 20px;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  color: var(--swopla-grijs-licht);
+}
+
+.foto-dropzone:hover,
+.foto-dropzone.is-sleep-actief {
+  border-color: var(--swopla-groen);
+  background: var(--swopla-groen-tint);
+}
+
+.foto-dropzone__icoon {
+  color: var(--swopla-grijs-licht);
+}
+
+.foto-dropzone__tekst {
+  font-size: 14px;
+  color: var(--swopla-tekst);
+}
+
+.foto-dropzone__subtekst {
+  font-size: 12px;
+  color: var(--swopla-grijs-licht);
+}
+
+.foto-upload__thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.foto-upload__thumb {
+  width: 78px;
+  height: 78px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--swopla-rand);
+}
+
+.foto-upload__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.foto-upload__verwijder {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: oklch(0% 0 0 / 0.55);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }

@@ -4,18 +4,24 @@ import { getRelationId } from './hookUtils'
 
 /**
  * Notificatie bij de uitkomst van een geschil (besloten: alleen bij status Beslist,
- * niet bij tussenstappen zoals Geëscaleerd naar team — sluit aan bij het
+ * niet bij tussenstappen zoals Geëscaleerd naar team. Sluit aan bij het
  * "zo min mogelijk notificaties"-uitgangspunt uit het concept). Gaat naar BEIDE
- * deelnemers van het onderliggende TradeProposal, niet alleen de indiener — de
+ * deelnemers van het onderliggende TradeProposal, niet alleen de indiener. De
  * uitkomst raakt beide partijen.
  *
  * `req` wordt overal meegegeven zodat deze aanroepen in dezelfde transactie
  * blijven als de Dispute-wijziging zelf (anders kan de foreign key naar deze
- * nog niet gecommitte Dispute-rij niet worden opgelost — zelfde bug als eerder
+ * nog niet gecommitte Dispute-rij niet worden opgelost, zelfde bug als eerder
  * bij TradeProposals, zie de toelichting daar).
  */
-const notificerenBijBeslissing: CollectionAfterChangeHook = async ({ doc, operation, previousDoc, req }) => {
-  const wordtBeslist = operation === 'update' && doc.status === 'beslist' && previousDoc?.status !== 'beslist'
+const notificerenBijBeslissing: CollectionAfterChangeHook = async ({
+  doc,
+  operation,
+  previousDoc,
+  req,
+}) => {
+  const wordtBeslist =
+    operation === 'update' && doc.status === 'beslist' && previousDoc?.status !== 'beslist'
   if (!wordtBeslist) {
     return doc
   }
@@ -25,7 +31,12 @@ const notificerenBijBeslissing: CollectionAfterChangeHook = async ({ doc, operat
     return doc
   }
 
-  const voorstel = await req.payload.findByID({ collection: 'trade-proposals', id: voorstelId, depth: 0, req })
+  const voorstel = await req.payload.findByID({
+    collection: 'trade-proposals',
+    id: voorstelId,
+    depth: 0,
+    req,
+  })
   const idA = getRelationId(voorstel?.deelnemer_a)
   const idB = getRelationId(voorstel?.deelnemer_b)
   const ontvangers = [idA, idB].filter((id): id is number => typeof id === 'number')
@@ -94,7 +105,8 @@ export const Disputes: CollectionConfig = {
         { label: 'Gesloten', value: 'gesloten' },
       ],
       admin: {
-        description: 'Bij status Beslist: triggert een Notification (categorie Geschil) naar beide deelnemers.',
+        description:
+          'Bij status Beslist: triggert een Notification (categorie Geschil) naar beide deelnemers.',
       },
     },
     {
@@ -103,14 +115,14 @@ export const Disputes: CollectionConfig = {
       relationTo: 'users',
       hasMany: false,
       admin: {
-        description: 'Optioneel — Swopla-teamlid dat de knoop doorhakt bij escalatie.',
+        description: 'Optioneel: Swopla-teamlid dat de knoop doorhakt bij escalatie.',
       },
     },
     {
       name: 'beslissing',
       type: 'textarea',
       admin: {
-        description: 'Optioneel — toelichting op de bindende beslissing.',
+        description: 'Optioneel: toelichting op de bindende beslissing.',
       },
     },
   ],

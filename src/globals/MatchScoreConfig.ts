@@ -10,7 +10,8 @@ import type { GlobalConfig } from 'payload'
 export const MatchScoreConfig: GlobalConfig = {
   slug: 'match-score-config',
   admin: {
-    description: 'Matchscore-gewichten. Exacte getallen nog niet besloten — richting/volgorde staat vast, huidige waardes zijn placeholders.',
+    description:
+      'Matchscore-gewichten. Exacte getallen nog niet besloten, richting/volgorde staat vast, huidige waardes zijn placeholders.',
   },
   fields: [
     {
@@ -71,7 +72,7 @@ export const MatchScoreConfig: GlobalConfig = {
           name: 'gewicht_reviews',
           type: 'number',
           defaultValue: 0,
-          admin: { description: 'Optioneel, mag later — vandaar default 0.' },
+          admin: { description: 'Optioneel, mag later, vandaar default 0.' },
         },
         {
           name: 'locatie_weging_ophalen_vs_verzenden',
@@ -88,7 +89,7 @@ export const MatchScoreConfig: GlobalConfig = {
           name: 'gewicht_ontdekken_gewenst_terug',
           type: 'number',
           defaultValue: 60,
-          admin: { description: 'Weegt zwaarst — actiefste signaal.' },
+          admin: { description: 'Weegt het zwaarst, actiefste signaal.' },
         },
         {
           name: 'gewicht_ontdekken_zoekgeschiedenis',
@@ -100,7 +101,8 @@ export const MatchScoreConfig: GlobalConfig = {
           type: 'number',
           defaultValue: 10,
           admin: {
-            description: 'Breedste, meest passieve signaal — ook de terugval wanneer de twee bovenstaande ontbreken.',
+            description:
+              'Breedste, meest passieve signaal, ook de terugval wanneer de twee bovenstaande ontbreken.',
           },
         },
         {

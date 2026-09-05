@@ -6,7 +6,7 @@ export const Reports: CollectionConfig = {
     useAsTitle: 'id',
     defaultColumns: ['melder', 'onderwerp', 'status'],
     description:
-      'Melden = kwade trouw/misbruik. Bewust gescheiden van Disputes (geschil = eerlijk meningsverschil) — nooit samenvoegen.',
+      'Melden = kwade trouw/misbruik. Bewust gescheiden van Disputes (geschil = eerlijk meningsverschil). Nooit samenvoegen.',
   },
   access: {
     read: () => true,
@@ -26,7 +26,7 @@ export const Reports: CollectionConfig = {
       hasMany: false,
       required: true,
       admin: {
-        description: 'Waarover wordt gemeld — een gebruiker of een specifiek item.',
+        description: 'Waarover wordt gemeld: een gebruiker of een specifiek item.',
       },
     },
     {
@@ -46,7 +46,7 @@ export const Reports: CollectionConfig = {
       ],
       admin: {
         description:
-          'Statusopties nog niet expliciet besloten in het concept — eerste redelijke aanname, ter review.',
+          'Statusopties nog niet expliciet besloten in het concept, eerste redelijke aanname, ter review.',
       },
     },
   ],

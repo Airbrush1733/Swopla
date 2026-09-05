@@ -30,16 +30,42 @@ type FilterGroepNaam = (typeof FILTER_GROEP_NAMEN)[number]
 function FilterIcoon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M2 4h12M4.5 8h7M6.5 12h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <circle cx="5" cy="4" r="1.4" fill="currentColor" stroke="var(--swopla-achtergrond, #fff)" strokeWidth="0.6" />
-      <circle cx="10.5" cy="8" r="1.4" fill="currentColor" stroke="var(--swopla-achtergrond, #fff)" strokeWidth="0.6" />
-      <circle cx="8" cy="12" r="1.4" fill="currentColor" stroke="var(--swopla-achtergrond, #fff)" strokeWidth="0.6" />
+      <path
+        d="M2 4h12M4.5 8h7M6.5 12h3"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <circle
+        cx="5"
+        cy="4"
+        r="1.4"
+        fill="currentColor"
+        stroke="var(--swopla-achtergrond, #fff)"
+        strokeWidth="0.6"
+      />
+      <circle
+        cx="10.5"
+        cy="8"
+        r="1.4"
+        fill="currentColor"
+        stroke="var(--swopla-achtergrond, #fff)"
+        strokeWidth="0.6"
+      />
+      <circle
+        cx="8"
+        cy="12"
+        r="1.4"
+        fill="currentColor"
+        stroke="var(--swopla-achtergrond, #fff)"
+        strokeWidth="0.6"
+      />
     </svg>
   )
 }
 
 /**
- * Filter-zijbalk voor Ontdekken — past instant toe bij elke wijziging (geen aparte
+ * Filter-zijbalk voor Ontdekken, past instant toe bij elke wijziging (geen aparte
  * "toepassen"-knop, zie Ralphs feedback op de eerste versie). Elke handler duwt de
  * bijgewerkte queryparams naar de URL; Next.js rendert de resultatenlijst (Server
  * Component, leest `searchParams`) daarna automatisch opnieuw zonder volledige reload.
@@ -51,7 +77,11 @@ function FilterIcoon() {
  * instant -- de knop onderaan toont het live resultaataantal en sluit het paneel, "Wis
  * alle filters" verwijdert alle filter-queryparams in een keer.
  */
-export default function FilterZijbalk({ hoofdCategorieen, tellingen, aantalResultaten }: FilterZijbalkProps) {
+export default function FilterZijbalk({
+  hoofdCategorieen,
+  tellingen,
+  aantalResultaten,
+}: FilterZijbalkProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -205,7 +235,8 @@ export default function FilterZijbalk({ hoofdCategorieen, tellingen, aantalResul
                 checked={huidigeAfstand === optie.waarde}
                 onChange={() => zetEnkeleWaarde('afstand', optie.waarde)}
               />
-              {optie.label} <span className="optie__telling">({tellingen.afstand[optie.waarde] ?? 0})</span>
+              {optie.label}{' '}
+              <span className="optie__telling">({tellingen.afstand[optie.waarde] ?? 0})</span>
             </label>
           ))}
         </Filtergroep>
@@ -256,7 +287,8 @@ export default function FilterZijbalk({ hoofdCategorieen, tellingen, aantalResul
               checked={huidigGeverifieerd}
               onChange={(e) => zetVinkje('geverifieerd', e.target.checked)}
             />
-            Alleen geverifieerde gebruikers <span className="optie__telling">({tellingen.geverifieerd})</span>
+            Alleen geverifieerde gebruikers{' '}
+            <span className="optie__telling">({tellingen.geverifieerd})</span>
           </label>
         </Filtergroep>
       </>
@@ -275,7 +307,9 @@ export default function FilterZijbalk({ hoofdCategorieen, tellingen, aantalResul
       <button type="button" className="filter-mobiel-knop" onClick={() => setPaneelOpen(true)}>
         <FilterIcoon />
         Filters
-        {aantalActieveFilters > 0 && <span className="filter-mobiel-knop__badge">{aantalActieveFilters}</span>}
+        {aantalActieveFilters > 0 && (
+          <span className="filter-mobiel-knop__badge">{aantalActieveFilters}</span>
+        )}
       </button>
 
       <div
@@ -284,7 +318,12 @@ export default function FilterZijbalk({ hoofdCategorieen, tellingen, aantalResul
         aria-hidden={!paneelOpen}
       />
 
-      <div className={`filter-drawer${paneelOpen ? ' is-open' : ''}`} role="dialog" aria-modal="true" aria-label="Filters">
+      <div
+        className={`filter-drawer${paneelOpen ? ' is-open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Filters"
+      >
         <div className="filter-drawer__header">
           <span>Filters</span>
           <button
@@ -307,7 +346,11 @@ export default function FilterZijbalk({ hoofdCategorieen, tellingen, aantalResul
               Wis alle filters
             </button>
           )}
-          <button type="button" className="filter-drawer__toon" onClick={() => setPaneelOpen(false)}>
+          <button
+            type="button"
+            className="filter-drawer__toon"
+            onClick={() => setPaneelOpen(false)}
+          >
             Toon {aantalResultaten} {aantalResultaten === 1 ? 'product' : 'producten'}
           </button>
         </div>

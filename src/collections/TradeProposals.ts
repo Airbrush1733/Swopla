@@ -1,4 +1,9 @@
-import type { CollectionAfterChangeHook, CollectionBeforeChangeHook, CollectionConfig, PayloadRequest } from 'payload'
+import type {
+  CollectionAfterChangeHook,
+  CollectionBeforeChangeHook,
+  CollectionConfig,
+  PayloadRequest,
+} from 'payload'
 
 import { getRelationId } from './hookUtils'
 
@@ -27,7 +32,12 @@ const STATUS_LABELS: Record<string, string> = {
  * voordat een TradeProposal gestart (create) of geaccepteerd (status → acceptatie-statussen)
  * mag worden. Dit is een validatieregel, geen apart schemaveld.
  */
-const checkVerificatie: CollectionBeforeChangeHook = async ({ data, operation, req, originalDoc }) => {
+const checkVerificatie: CollectionBeforeChangeHook = async ({
+  data,
+  operation,
+  req,
+  originalDoc,
+}) => {
   const wordtGestart = operation === 'create'
   const wordtGeaccepteerd =
     operation === 'update' &&
@@ -64,7 +74,7 @@ const checkVerificatie: CollectionBeforeChangeHook = async ({ data, operation, r
  * deze aanroepen in dezelfde database-transactie draaien als de TradeProposals-
  * wijziging die dit triggert. Zonder `req` start Payload een eigen transactie
  * die de nog niet gecommitte TradeProposals-rij niet kan zien, wat leidde tot
- * een foreign-key-fout bij het testen (zie Notifications hieronder — zelfde
+ * een foreign-key-fout bij het testen (zie Notifications hieronder, zelfde
  * probleem, zelfde fix).
  */
 async function verhoogTrackrecordTeller(
@@ -92,7 +102,7 @@ async function verhoogTrackrecordTeller(
  * - verlopen      → +1 ingetrokken_of_geweigerd voor BEIDE deelnemers (geen van
  *                   beiden heeft het afgerond)
  * - ingetrokken   → +1 ingetrokken_of_geweigerd, maar ALLEEN voor wie de actie
- *                   uitvoerde (req.user) — niet voor de andere deelnemer
+ *                   uitvoerde (req.user), niet voor de andere deelnemer
  * - geweigerd     → GEEN teller-impact (geweigerd worden is geen
  *                   onbetrouwbaarheidssignaal, gewoon onderhandelen)
  */
@@ -182,7 +192,10 @@ export const TradeProposals: CollectionConfig = {
       options: [
         { label: 'Voorgesteld', value: 'voorgesteld' },
         { label: 'In onderhandeling', value: 'in_onderhandeling' },
-        { label: 'Geaccepteerd - wacht op bevestiging', value: 'geaccepteerd_wacht_op_bevestiging' },
+        {
+          label: 'Geaccepteerd - wacht op bevestiging',
+          value: 'geaccepteerd_wacht_op_bevestiging',
+        },
         { label: 'Bevestigd door A', value: 'bevestigd_door_a' },
         { label: 'Bevestigd door B', value: 'bevestigd_door_b' },
         { label: 'Voltooid', value: 'voltooid' },

@@ -7,7 +7,7 @@ import { VIEWER_COOKIE } from '@/lib/viewer'
 
 /**
  * Zet of wist de "bekijk als testgebruiker"-cookie (zie src/lib/viewer.ts voor de
- * achtergrond). Server action achter het select-menu in de Nav — werkt zonder client-JS.
+ * achtergrond). Server action achter het select-menu in de Nav, werkt zonder client-JS.
  */
 export async function zetTestgebruiker(formData: FormData) {
   const waarde = formData.get('viewerId')

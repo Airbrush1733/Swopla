@@ -34,7 +34,8 @@ export const ShopItems: CollectionConfig = {
       hasMany: false,
       required: true,
       admin: {
-        description: 'Voedt de matchscore-factor "aanbod-vraag overlap" tegen Users.interesses van anderen.',
+        description:
+          'Voedt de matchscore-factor "aanbod-vraag overlap" tegen Users.interesses van anderen.',
       },
     },
     {
@@ -66,7 +67,7 @@ export const ShopItems: CollectionConfig = {
         { label: 'Hoog', value: 'hoog' },
       ],
       admin: {
-        description: 'Nooit een prijs — vaste schaal, geen prijsrange of vrije tekst.',
+        description: 'Nooit een prijs, vaste schaal, geen prijsrange of vrije tekst.',
       },
     },
     {
@@ -79,7 +80,8 @@ export const ShopItems: CollectionConfig = {
         { label: 'Verzenden', value: 'verzenden' },
       ],
       admin: {
-        description: '"Beide mogelijk" = beide opties selecteren. Voedt locatie-weging in de matchscore.',
+        description:
+          '"Beide mogelijk" = beide opties selecteren. Voedt locatie-weging in de matchscore.',
       },
     },
     {
@@ -95,7 +97,7 @@ export const ShopItems: CollectionConfig = {
       ],
       admin: {
         description:
-          'Een item blijft open voor meerdere gelijktijdige voorstellen; dit veld is de ruil-levenscyclus van een al gepubliceerd item (geen concept/draft-staat — die volgt later apart).',
+          'Een item blijft open voor meerdere gelijktijdige voorstellen; dit veld is de ruil-levenscyclus van een al gepubliceerd item (geen concept/draft-staat, die volgt later apart).',
       },
     },
     {

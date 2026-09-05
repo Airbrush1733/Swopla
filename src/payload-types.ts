@@ -78,6 +78,7 @@ export interface Config {
     reports: Report;
     disputes: Dispute;
     'view-history': ViewHistory;
+    'item-views': ItemView;
     'search-history': SearchHistory;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -97,6 +98,7 @@ export interface Config {
     reports: ReportsSelect<false> | ReportsSelect<true>;
     disputes: DisputesSelect<false> | DisputesSelect<true>;
     'view-history': ViewHistorySelect<false> | ViewHistorySelect<true>;
+    'item-views': ItemViewsSelect<false> | ItemViewsSelect<true>;
     'search-history': SearchHistorySelect<false> | SearchHistorySelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -154,7 +156,7 @@ export interface User {
    */
   locatie_ruw?: string | null;
   /**
-   * Precieze coördinaten. Pas delen na een bevestigde afspraak (fysieke veiligheid) — dit veld regelt alleen opslag, niet wanneer het getoond wordt.
+   * Precieze coördinaten. Pas delen na een bevestigde afspraak (fysieke veiligheid). Dit veld regelt alleen opslag, niet wanneer het getoond wordt.
    *
    * @minItems 2
    * @maxItems 2
@@ -187,7 +189,7 @@ export interface User {
    */
   geschiedenis_gebruik_aan?: boolean | null;
   /**
-   * Breed, statisch signaal — vervangt het vervallen WishlistItems. Kan op elke diepte in de categorieboom staan.
+   * Breed, statisch signaal, vervangt het vervallen WishlistItems. Kan op elke diepte in de categorieboom staan.
    */
   interesses?: (number | Category)[] | null;
   /**
@@ -272,7 +274,7 @@ export interface ShopItem {
   fotos: (number | Media)[];
   staat: 'nieuwstaat' | 'zo_goed_als_nieuw' | 'gebruikssporen' | 'duidelijke_gebruikssporen';
   /**
-   * Nooit een prijs — vaste schaal, geen prijsrange of vrije tekst.
+   * Nooit een prijs, vaste schaal, geen prijsrange of vrije tekst.
    */
   waarde_indicatie: 'laag' | 'midden' | 'hoog';
   /**
@@ -280,7 +282,7 @@ export interface ShopItem {
    */
   overdracht: ('ophalen' | 'verzenden')[];
   /**
-   * Een item blijft open voor meerdere gelijktijdige voorstellen; dit veld is de ruil-levenscyclus van een al gepubliceerd item (geen concept/draft-staat — die volgt later apart).
+   * Een item blijft open voor meerdere gelijktijdige voorstellen; dit veld is de ruil-levenscyclus van een al gepubliceerd item (geen concept/draft-staat, die volgt later apart).
    */
   status: 'beschikbaar' | 'in_onderhandeling' | 'geruild' | 'ingetrokken';
   /**
@@ -347,7 +349,7 @@ export interface ProposalMessage {
   createdAt: string;
 }
 /**
- * Bewust een beperkte set triggers, geen regel per systeemgebeurtenis. Matches triggeren hier expliciet NIET — dat loopt via een visuele indicator op het productkaartje (mag-later, geen v1-veld).
+ * Bewust een beperkte set triggers, geen regel per systeemgebeurtenis. Matches triggeren hier expliciet NIET, dat loopt via een visuele indicator op het productkaartje (mag-later, geen v1-veld).
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "notifications".
@@ -388,18 +390,18 @@ export interface Dispute {
    */
   status: 'open' | 'in_onderling_overleg' | 'geescaleerd_naar_team' | 'beslist' | 'gesloten';
   /**
-   * Optioneel — Swopla-teamlid dat de knoop doorhakt bij escalatie.
+   * Optioneel: Swopla-teamlid dat de knoop doorhakt bij escalatie.
    */
   beoordeeld_door?: (number | null) | User;
   /**
-   * Optioneel — toelichting op de bindende beslissing.
+   * Optioneel: toelichting op de bindende beslissing.
    */
   beslissing?: string | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
- * Melden = kwade trouw/misbruik. Bewust gescheiden van Disputes (geschil = eerlijk meningsverschil) — nooit samenvoegen.
+ * Melden = kwade trouw/misbruik. Bewust gescheiden van Disputes (geschil = eerlijk meningsverschil). Nooit samenvoegen.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "reports".
@@ -408,7 +410,7 @@ export interface Report {
   id: number;
   melder: number | User;
   /**
-   * Waarover wordt gemeld — een gebruiker of een specifiek item.
+   * Waarover wordt gemeld: een gebruiker of een specifiek item.
    */
   onderwerp:
     | {
@@ -421,7 +423,7 @@ export interface Report {
       };
   reden: string;
   /**
-   * Statusopties nog niet expliciet besloten in het concept — eerste redelijke aanname, ter review.
+   * Statusopties nog niet expliciet besloten in het concept, eerste redelijke aanname, ter review.
    */
   status: 'open' | 'in_behandeling' | 'afgehandeld';
   updatedAt: string;
@@ -439,7 +441,27 @@ export interface ViewHistory {
   createdAt: string;
 }
 /**
- * Dit is ook de plek waar specifiek, actueel zoeken landt — vervangt het vervallen WishlistItems (zie Categories/Users.interesses voor het brede, statische signaal).
+ * Log van weergaven per shop-item, voor "X keer bekeken" en de Inzichten-zijbalk (weergaven + trend) op het Shop-scherm.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "item-views".
+ */
+export interface ItemView {
+  id: number;
+  item: number | ShopItem;
+  /**
+   * Automatisch gezet vanaf item.eigenaar, niet handmatig invullen.
+   */
+  eigenaar?: (number | null) | User;
+  /**
+   * Optioneel: er is nog geen echte auth, dus niet elke weergave heeft een bekende kijker.
+   */
+  kijker?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Dit is ook de plek waar specifiek, actueel zoeken landt, vervangt het vervallen WishlistItems (zie Categories/Users.interesses voor het brede, statische signaal).
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "search-history".
@@ -527,6 +549,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'view-history';
         value: number | ViewHistory;
+      } | null)
+    | ({
+        relationTo: 'item-views';
+        value: number | ItemView;
       } | null)
     | ({
         relationTo: 'search-history';
@@ -745,6 +771,17 @@ export interface ViewHistorySelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "item-views_select".
+ */
+export interface ItemViewsSelect<T extends boolean = true> {
+  item?: T;
+  eigenaar?: T;
+  kijker?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "search-history_select".
  */
 export interface SearchHistorySelect<T extends boolean = true> {
@@ -795,7 +832,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Matchscore-gewichten. Exacte getallen nog niet besloten — richting/volgorde staat vast, huidige waardes zijn placeholders.
+ * Matchscore-gewichten. Exacte getallen nog niet besloten, richting/volgorde staat vast, huidige waardes zijn placeholders.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "match-score-config".
@@ -819,17 +856,17 @@ export interface MatchScoreConfig {
   gewicht_betrouwbaarheid?: number | null;
   gewicht_sociaal?: number | null;
   /**
-   * Optioneel, mag later — vandaar default 0.
+   * Optioneel, mag later, vandaar default 0.
    */
   gewicht_reviews?: number | null;
   locatie_weging_ophalen_vs_verzenden?: number | null;
   /**
-   * Weegt zwaarst — actiefste signaal.
+   * Weegt het zwaarst, actiefste signaal.
    */
   gewicht_ontdekken_gewenst_terug?: number | null;
   gewicht_ontdekken_zoekgeschiedenis?: number | null;
   /**
-   * Breedste, meest passieve signaal — ook de terugval wanneer de twee bovenstaande ontbreken.
+   * Breedste, meest passieve signaal, ook de terugval wanneer de twee bovenstaande ontbreken.
    */
   gewicht_ontdekken_interesses?: number | null;
   /**

@@ -3,16 +3,20 @@ import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
 /**
  * Anonimiseer-routine bij accountverwijdering (besloten, zie
  * technische-architectuur-schets.md → "Bouwstatus"): zodra account_status naar
- * 'geanonimiseerd' verandert (ongeacht welke UI dat aanroept — er is nog geen
+ * 'geanonimiseerd' verandert (ongeacht welke UI dat aanroept, er is nog geen
  * "account verwijderen"-knop gebouwd, dit is de kant die daar straks op aansluit),
  * worden naam/email/avatar/locatie_exact automatisch gescrubd. Gekoppelde
  * ShopItems/TradeProposals/ProposalMessages blijven bestaan, zoals besloten.
  *
  * Bewust NIET meegenomen: het wachtwoord ongeldig maken. Dat raakt Payload's
- * eigen auth-hooks en is een aparte, kleine vervolgstap als dat nodig blijkt —
+ * eigen auth-hooks en is een aparte, kleine vervolgstap als dat nodig blijkt,
  * niet stilzwijgend hier toegevoegd.
  */
-const anonimiseerBijStatuswijziging: CollectionBeforeChangeHook = ({ data, operation, originalDoc }) => {
+const anonimiseerBijStatuswijziging: CollectionBeforeChangeHook = ({
+  data,
+  operation,
+  originalDoc,
+}) => {
   if (operation !== 'update') {
     return data
   }
@@ -73,7 +77,7 @@ export const Users: CollectionConfig = {
       type: 'point',
       admin: {
         description:
-          'Precieze coördinaten. Pas delen na een bevestigde afspraak (fysieke veiligheid) — dit veld regelt alleen opslag, niet wanneer het getoond wordt.',
+          'Precieze coördinaten. Pas delen na een bevestigde afspraak (fysieke veiligheid). Dit veld regelt alleen opslag, niet wanneer het getoond wordt.',
       },
     },
 
@@ -156,7 +160,7 @@ export const Users: CollectionConfig = {
       hasMany: true,
       admin: {
         description:
-          'Breed, statisch signaal — vervangt het vervallen WishlistItems. Kan op elke diepte in de categorieboom staan.',
+          'Breed, statisch signaal, vervangt het vervallen WishlistItems. Kan op elke diepte in de categorieboom staan.',
       },
     },
 

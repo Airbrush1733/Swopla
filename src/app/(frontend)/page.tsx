@@ -67,7 +67,9 @@ export default async function OntdekkenPage({
     viewer
       ? payload.find({
           collection: 'shop-items',
-          where: { and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }] },
+          where: {
+            and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }],
+          },
           depth: 0,
           limit: 100,
         })
@@ -88,7 +90,7 @@ export default async function OntdekkenPage({
   const viewerEigenItems = viewerItemsRes?.docs ?? []
   const zoektermen = zoekgeschiedenisRes?.docs.map((d) => d.zoekterm) ?? []
 
-  // Eigen items van de viewer horen niet tussen "te ontdekken" items — voorheen deed de
+  // Eigen items van de viewer horen niet tussen "te ontdekken" items, voorheen deed de
   // query dit met een `not_equals`-voorwaarde, nu gebeurt het hier zodat de query zelf
   // niet meer op de viewer hoeft te wachten (zie hierboven).
   const itemsDocs = viewer
@@ -102,13 +104,20 @@ export default async function OntdekkenPage({
   for (const item of itemsDocs) {
     scoreMap.set(
       item.id,
-      berekenOntdekkenScore({ item, viewer, viewerEigenItems, zoektermen, categorieMap, config: matchConfig }),
+      berekenOntdekkenScore({
+        item,
+        viewer,
+        viewerEigenItems,
+        zoektermen,
+        categorieMap,
+        config: matchConfig,
+      }),
     )
   }
 
   const gefilterd = filterItems(itemsDocs, filters, categorieMap, viewer?.locatie_exact)
 
-  // Tellingen voor ALLE categorieën (hoofd- én subniveau) — nodig voor zowel de
+  // Tellingen voor ALLE categorieën (hoofd- én subniveau), nodig voor zowel de
   // zijbalk (hoofdcategorieën) als de zoeksuggesties (kunnen ook subcategorieën zijn).
   const facetTellingen = berekenFacetTellingen(
     itemsDocs,
@@ -131,7 +140,8 @@ export default async function OntdekkenPage({
     .sort((a, b) => a.naam.localeCompare(b.naam, 'nl'))
 
   const gesorteerd = [...gefilterd].sort((a, b) => {
-    if (filters.sort === 'nieuw') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    if (filters.sort === 'nieuw')
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     if (filters.sort === 'afstand') {
       const eigenaarA = typeof a.eigenaar === 'object' ? (a.eigenaar as User) : null
       const eigenaarB = typeof b.eigenaar === 'object' ? (b.eigenaar as User) : null
@@ -147,7 +157,10 @@ export default async function OntdekkenPage({
   const chips: { label: string; href: string }[] = []
   filters.categorie.forEach((id) => {
     const naam = categorieMap.get(Number(id))?.naam ?? id
-    chips.push({ label: naam, href: hrefMet({ ...filters, categorie: filters.categorie.filter((c) => c !== id) }) })
+    chips.push({
+      label: naam,
+      href: hrefMet({ ...filters, categorie: filters.categorie.filter((c) => c !== id) }),
+    })
   })
   filters.staat.forEach((s) => {
     chips.push({

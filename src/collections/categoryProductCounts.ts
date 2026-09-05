@@ -3,7 +3,7 @@
 // Eén keer alle ShopItems ophalen (paginated, alleen het categorie-veld nodig)
 // en per categorie-id tellen, in plaats van per rij in de Categories-lijst
 // een aparte API-aanroep te doen. Gebruikt door CategoryProductCountCell.tsx.
-// Bewust geen persistentie — cache leeft alleen voor deze paginabezoek.
+// Bewust geen persistentie. Cache leeft alleen voor deze paginabezoek.
 
 const directCounts = new Map<number, number>()
 let loaded = false

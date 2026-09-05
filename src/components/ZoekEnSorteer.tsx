@@ -23,11 +23,11 @@ const MAX_SUGGESTIES = 8
  * daarna alleen de bijgewerkte Server Component-data op (geen volledige page-reload).
  *
  * Vanaf 3 letters verschijnt een suggestie-dropdown met matchende categorieën (hoofd- én
- * subcategorieën) — hetzelfde "typ-en-klik"-selectiemechanisme als elders in het concept
+ * subcategorieën), hetzelfde "typ-en-klik"-selectiemechanisme als elders in het concept
  * (Interesses, gewenst-terug), nu toegepast op de zoekbalk zelf. Alleen het klikken (of
  * met Enter bevestigen) van een suggestie zet een filter (categorie-queryparam, zelfde
  * als de zijbalk-checkboxes); los typen zonder een suggestie te kiezen past nooit een
- * filter toe — er is dus geen los tekst-op-titel/omschrijving-zoeken.
+ * filter toe. Er is dus geen los tekst-op-titel/omschrijving-zoeken.
  */
 export default function ZoekEnSorteer({ categorieSuggesties }: ZoekEnSorteerProps) {
   const router = useRouter()
@@ -155,7 +155,9 @@ export default function ZoekEnSorteer({ categorieSuggesties }: ZoekEnSorteerProp
                 >
                   <span className="zoek-suggesties__naam">
                     {c.naam} <span className="zoek-suggesties__aantal">({c.aantal})</span>
-                    {c.parentNaam && <span className="zoek-suggesties__parent"> in {c.parentNaam}</span>}
+                    {c.parentNaam && (
+                      <span className="zoek-suggesties__parent"> in {c.parentNaam}</span>
+                    )}
                   </span>
                 </button>
               </li>
@@ -166,7 +168,10 @@ export default function ZoekEnSorteer({ categorieSuggesties }: ZoekEnSorteerProp
 
       <div className="sorteer-select">
         Sorteren op:
-        <select defaultValue={searchParams.get('sort') ?? 'match'} onChange={(e) => opSortChange(e.target.value)}>
+        <select
+          defaultValue={searchParams.get('sort') ?? 'match'}
+          onChange={(e) => opSortChange(e.target.value)}
+        >
           <option value="match">Beste match</option>
           <option value="afstand">Afstand</option>
           <option value="nieuw">Nieuwste eerst</option>

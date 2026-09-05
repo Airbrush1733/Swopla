@@ -6,7 +6,7 @@ export const SearchHistory: CollectionConfig = {
     useAsTitle: 'zoekterm',
     defaultColumns: ['gebruiker', 'zoekterm', 'createdAt'],
     description:
-      'Dit is ook de plek waar specifiek, actueel zoeken landt — vervangt het vervallen WishlistItems (zie Categories/Users.interesses voor het brede, statische signaal).',
+      'Dit is ook de plek waar specifiek, actueel zoeken landt, vervangt het vervallen WishlistItems (zie Categories/Users.interesses voor het brede, statische signaal).',
   },
   access: {
     // Alleen zichtbaar voor de gebruiker zelf.

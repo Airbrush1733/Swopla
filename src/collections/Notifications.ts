@@ -6,7 +6,7 @@ export const Notifications: CollectionConfig = {
     useAsTitle: 'tekst',
     defaultColumns: ['ontvanger', 'categorie', 'tekst', 'createdAt'],
     description:
-      'Bewust een beperkte set triggers, geen regel per systeemgebeurtenis. Matches triggeren hier expliciet NIET — dat loopt via een visuele indicator op het productkaartje (mag-later, geen v1-veld).',
+      'Bewust een beperkte set triggers, geen regel per systeemgebeurtenis. Matches triggeren hier expliciet NIET, dat loopt via een visuele indicator op het productkaartje (mag-later, geen v1-veld).',
   },
   access: {
     read: ({ req: { user } }) => {

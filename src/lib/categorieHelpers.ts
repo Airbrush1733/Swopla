@@ -4,9 +4,7 @@ export type CategorieId = number
 export type CategorieMap = Map<CategorieId, Category>
 
 /** Haalt het (mogelijk niet-gepopuleerde) id uit een Payload-relatiewaarde. */
-export function categorieIdVan(
-  waarde: number | Category | null | undefined,
-): CategorieId | null {
+export function categorieIdVan(waarde: number | Category | null | undefined): CategorieId | null {
   if (waarde === null || waarde === undefined) return null
   return typeof waarde === 'object' ? waarde.id : waarde
 }
@@ -51,7 +49,7 @@ export function ketensOverlappen(a: Set<CategorieId>, b: Set<CategorieId>): bool
   return false
 }
 
-/** Alleen hoofdcategorieën (parent leeg) — gebruikt voor de Categorie-filtergroep. */
+/** Alleen hoofdcategorieën (parent leeg), gebruikt voor de Categorie-filtergroep. */
 export function hoofdcategorieen(categorieen: Category[]): Category[] {
   return categorieen
     .filter((c) => categorieIdVan(c.parent) === null)

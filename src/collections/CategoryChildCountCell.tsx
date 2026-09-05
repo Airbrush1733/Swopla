@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react'
 import { getChildCount, subscribe } from './categoryTreeToggle'
 
 // Vervangt de ruwe parent-relatie in deze kolom door het aantal subcategorieën
-// — de hiërarchie zelf is al zichtbaar via de insprong/pijltjes in de
+// De hiërarchie zelf is al zichtbaar via de insprong/pijltjes in de
 // naam-kolom, dus de losse parent-waarde voegde daar niets aan toe. Leeg voor
 // rijen zonder eigen subcategorieën (waaronder alle subcategorieën zelf).
 export const CategoryChildCountCell: React.FC<DefaultCellComponentProps> = (props) => {
@@ -23,5 +23,9 @@ export const CategoryChildCountCell: React.FC<DefaultCellComponentProps> = (prop
     return null
   }
 
-  return <span style={{ opacity: 0.7 }}>{count} subcategorie{count === 1 ? '' : 'ën'}</span>
+  return (
+    <span style={{ opacity: 0.7 }}>
+      {count} subcategorie{count === 1 ? '' : 'ën'}
+    </span>
+  )
 }

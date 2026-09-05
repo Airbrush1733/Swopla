@@ -45,12 +45,30 @@ export const STAAT_LABELS: Record<string, string> = {
   duidelijke_gebruikssporen: 'Duidelijke gebruikssporen',
 }
 
+/** Ruil-levenscyclus van een gepubliceerd item (ShopItems.status) -- voor Mijn Shop. */
+export const STATUS_LABELS: Record<string, string> = {
+  beschikbaar: 'Beschikbaar',
+  in_onderhandeling: 'In onderhandeling',
+  geruild: 'Geruild',
+  ingetrokken: 'Ingetrokken',
+}
+
+export const WAARDE_LABELS: Record<string, string> = {
+  laag: 'Laag',
+  midden: 'Midden',
+  hoog: 'Hoog',
+}
+
 // ---------------------------------------------------------------------------
-// Eén predicaat per filterdimensie — los van elkaar, zodat facet-tellingen
+// Eén predicaat per filterdimensie, los van elkaar, zodat facet-tellingen
 // hieronder "alle filters behalve dimensie X" kunnen samenstellen.
 // ---------------------------------------------------------------------------
 
-function matchtCategorie(item: ShopItem, categorieIds: number[], categorieMap: CategorieMap): boolean {
+function matchtCategorie(
+  item: ShopItem,
+  categorieIds: number[],
+  categorieMap: CategorieMap,
+): boolean {
   if (categorieIds.length === 0) return true
   const itemId = categorieIdVan(item.categorie)
   const itemKeten = itemId !== null ? voorouderKeten(itemId, categorieMap) : new Set<number>()
@@ -90,7 +108,7 @@ function matchtQ(item: ShopItem, q: string): boolean {
   return `${item.titel} ${item.beschrijving}`.toLowerCase().includes(trimmed)
 }
 
-/** Filtert vóór het scoren/sorteren — de matchscore zelf blijft ongemoeid. */
+/** Filtert vóór het scoren/sorteren. De matchscore zelf blijft ongemoeid. */
 export function filterItems(
   items: ShopItem[],
   filters: OntdekkenFilters,
@@ -139,11 +157,14 @@ export function berekenFacetTellingen(
 
   function basis(exclusief: FilterDimensie): ShopItem[] {
     return items.filter((item) => {
-      if (exclusief !== 'categorie' && !matchtCategorie(item, gekozenCategorieIds, categorieMap)) return false
+      if (exclusief !== 'categorie' && !matchtCategorie(item, gekozenCategorieIds, categorieMap))
+        return false
       if (exclusief !== 'staat' && !matchtStaat(item, filters.staat)) return false
       if (exclusief !== 'overdracht' && !matchtOverdracht(item, filters.overdracht)) return false
-      if (exclusief !== 'afstand' && !matchtAfstand(item, filters.afstand, bezoekerLocatie)) return false
-      if (exclusief !== 'geverifieerd' && !matchtGeverifieerd(item, filters.geverifieerd)) return false
+      if (exclusief !== 'afstand' && !matchtAfstand(item, filters.afstand, bezoekerLocatie))
+        return false
+      if (exclusief !== 'geverifieerd' && !matchtGeverifieerd(item, filters.geverifieerd))
+        return false
       if (!matchtQ(item, filters.q)) return false
       return true
     })
@@ -152,7 +173,9 @@ export function berekenFacetTellingen(
   const basisCategorie = basis('categorie')
   const categorie: Record<number, number> = {}
   for (const id of hoofdCategorieIds) {
-    categorie[id] = basisCategorie.filter((item) => matchtCategorie(item, [id], categorieMap)).length
+    categorie[id] = basisCategorie.filter((item) =>
+      matchtCategorie(item, [id], categorieMap),
+    ).length
   }
 
   const basisStaat = basis('staat')
@@ -171,7 +194,9 @@ export function berekenFacetTellingen(
   const basisAfstand = basis('afstand')
   const afstand: Record<string, number> = { '': basisAfstand.length }
   for (const waarde of Object.keys(AFSTAND_KM)) {
-    afstand[waarde] = basisAfstand.filter((item) => matchtAfstand(item, waarde, bezoekerLocatie)).length
+    afstand[waarde] = basisAfstand.filter((item) =>
+      matchtAfstand(item, waarde, bezoekerLocatie),
+    ).length
   }
 
   const basisGeverifieerd = basis('geverifieerd')

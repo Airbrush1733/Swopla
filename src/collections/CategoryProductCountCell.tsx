@@ -9,7 +9,7 @@ import { getChildIds, hasChildren, subscribe } from './categoryTreeToggle'
 
 // Toont het aantal ShopItems in deze categorie. Voor een subcategorie is dit
 // simpelweg haar eigen items. Voor een hoofdcategorie is dit haar eigen items
-// (zeldzaam, maar toegestaan — elke knoop is een geldig eindpunt) plus alle
+// (zeldzaam, maar toegestaan, elke knoop is een geldig eindpunt) plus alle
 // items van haar subcategorieën, recursief opgeteld via de bestaande
 // ouder/kind-registry uit categoryTreeToggle.ts.
 export const CategoryProductCountCell: React.FC<DefaultCellComponentProps> = (props) => {

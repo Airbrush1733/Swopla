@@ -36,6 +36,20 @@ export default async function Nav() {
       <div className="nav__inner">
         <Logo />
         <nav className="nav__rechts">
+          {viewer ? (
+            <Link href="/shop" className="nav__link">
+              Mijn Shop
+            </Link>
+          ) : (
+            <span
+              className="nav__link"
+              style={{ color: 'var(--swopla-grijs-licht)' }}
+              title="Kies eerst een testgebruiker"
+            >
+              Mijn Shop
+            </span>
+          )}
+
           <span className="nav__link" style={{ color: 'var(--swopla-grijs-licht)' }}>
             Veiligheid &amp; hulp
           </span>
@@ -48,7 +62,7 @@ export default async function Nav() {
 
           <form action={zetTestgebruiker} className="nav__viewer-form">
             <select name="viewerId" defaultValue={viewer ? String(viewer.id) : ''}>
-              <option value="">— Uitgelogd —</option>
+              <option value="">(Uitgelogd)</option>
               {testGebruikers.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.naam ?? g.email}

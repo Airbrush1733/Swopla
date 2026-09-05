@@ -14,7 +14,7 @@ export async function getPayloadClient() {
 /**
  * Tijdelijke "bekijk als testgebruiker"-vervanging voor echte login (goedgekeurd door
  * Ralph als tussenoplossing, zie technische-architectuur-schets.md). Er bestaat nog geen
- * publieke registratie/login-flow — dit leest alleen een cookie met een user-id, geen
+ * publieke registratie/login-flow. Dit leest alleen een cookie met een user-id, geen
  * echte sessie/wachtwoordcontrole. Moet vervangen worden zodra echte auth gebouwd wordt.
  */
 export async function getViewer(): Promise<User | null> {
@@ -34,7 +34,7 @@ export async function getViewer(): Promise<User | null> {
   }
 }
 
-/** Lijst voor de testgebruiker-kiezer in de nav — alle niet-geanonimiseerde accounts. */
+/** Lijst voor de testgebruiker-kiezer in de nav, alle niet-geanonimiseerde accounts. */
 export async function getTestGebruikers(): Promise<User[]> {
   const payload = await getPayloadClient()
   const resultaat = await payload.find({
