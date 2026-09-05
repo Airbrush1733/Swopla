@@ -258,3 +258,60 @@ export type MatchBand = 'neutraal' | 'hoog'
 export function matchBand(score: number, hogeMatchDrempel: number): MatchBand {
   return score >= hogeMatchDrempel ? 'hoog' : 'neutraal'
 }
+
+// ---------------------------------------------------------------------------
+// Balans-indicatie voor het ruilvoorstel-paneel (waarde-balk tussen wat de zoeker
+// biedt en wat de aanbieder vraagt)
+// ---------------------------------------------------------------------------
+
+export type VoorstelBalansRichting = 'in_balans' | 'voordeel_zoeker' | 'voordeel_aanbieder'
+
+export interface VoorstelBalans {
+  /** -1 (volledig in voordeel aanbieder) .. 0 (in balans) .. +1 (volledig in voordeel zoeker) */
+  waarde: number
+  /** Positie van de balans-knop op de balk, 0-100. */
+  positiePercentage: number
+  richting: VoorstelBalansRichting
+}
+
+/**
+ * Drempel waaronder het verschil als "in balans" geldt. Zelfde soort pragmatische v1-
+ * invulling als de rest van dit bestand (richting staat vast: waarde_indicatie weegt mee
+ * in de balans, exacte drempel is een gevoelsmatige eerste keuze, geen aparte Ralph-vraag
+ * waard omdat elk redelijk alternatief hier later vrij bijgesteld kan worden).
+ */
+const BALANS_DREMPEL = 0.15
+
+/** Hergebruikt dezelfde waarde_indicatie-rangorde als waardeBalansScore hierboven (0/1/2), plus 1 zodat een enkel "laag" item niet als gewicht 0 meetelt. */
+function waardeGewicht(waarde: ShopItem['waarde_indicatie']): number {
+  return WAARDE_RANG[waarde] + 1
+}
+
+/**
+ * Berekent de waarde-balans voor het ruilvoorstel-paneel: wat de zoeker biedt
+ * (items_van_b) tegenover wat de aanbieder vraagt/biedt (items_van_a, in v1 doorgaans
+ * gewoon het context_item). Positief = in voordeel van de zoeker.
+ */
+export function berekenVoorstelBalans(
+  itemsVanAanbieder: ShopItem[],
+  itemsVanZoeker: ShopItem[],
+): VoorstelBalans {
+  const aanbiederWaarde = itemsVanAanbieder.reduce(
+    (som, i) => som + waardeGewicht(i.waarde_indicatie),
+    0,
+  )
+  const zoekerWaarde = itemsVanZoeker.reduce((som, i) => som + waardeGewicht(i.waarde_indicatie), 0)
+
+  const totaal = aanbiederWaarde + zoekerWaarde
+  const waarde = totaal === 0 ? 0 : (zoekerWaarde - aanbiederWaarde) / totaal
+
+  let richting: VoorstelBalansRichting = 'in_balans'
+  if (waarde > BALANS_DREMPEL) richting = 'voordeel_zoeker'
+  else if (waarde < -BALANS_DREMPEL) richting = 'voordeel_aanbieder'
+
+  return {
+    waarde,
+    positiePercentage: Math.max(0, Math.min(100, 50 + waarde * 50)),
+    richting,
+  }
+}

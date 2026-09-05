@@ -659,12 +659,48 @@ button {
   margin-bottom: 16px;
 }
 
+/* --- Ruilvoorstel-paneel --- */
+
+.rv-paneel {
+  width: 80%;
+  max-width: 1300px;
+  border-radius: 20px 0 0 20px;
+}
+
+/* Op mobiel is 80% te weinig ruimte voor de header (titel + statusbadge + Sluiten +
+   kruisje liepen door elkaar), dus daar wordt het een volledig-scherm overlay i.p.v.
+   een smalle strook. */
+.rv-paneel__pad {
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+@media (max-width: 640px) {
+  .rv-paneel {
+    width: 100%;
+    max-width: none;
+    border-radius: 0;
+  }
+
+  .rv-paneel__pad {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
 /* --- Productgrid & kaarten --- */
 
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
+}
+
+/* Ruilvoorstel-paneel is breder dan de hoofdinhoud (geen zijbalk ernaast), dus 4 kolommen
+   passen daar beter dan de 3 van de hoofdgrid. De media-queries hieronder gelden voor
+   .product-grid in het algemeen en overschrijven dit op kleinere schermen ook hier. */
+.product-grid--paneel {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .product-kaart {

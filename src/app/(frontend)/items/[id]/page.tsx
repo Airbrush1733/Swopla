@@ -2,12 +2,13 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
+import RuilvoorstelPaneel from '@/components/RuilvoorstelPaneel'
 import { initialenVan } from '@/lib/format'
 import { bouwCategorieMap } from '@/lib/categorieHelpers'
 import { berekenMariekeMatch, berekenProductmatch, matchBand } from '@/lib/matchscore'
 import { STAAT_LABELS, WAARDE_LABELS } from '@/lib/ontdekkenFilters'
 import { getPayloadClient, getViewer } from '@/lib/viewer'
-import type { Media, ShopItem, User } from '@/payload-types'
+import type { Media, ShopItem, TradeProposal, User } from '@/payload-types'
 
 function overdrachtLabel(overdracht: ShopItem['overdracht']): string {
   if (overdracht.includes('ophalen') && overdracht.includes('verzenden'))
@@ -39,48 +40,85 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   // Best-effort: een mislukte log mag de paginaweergave nooit blokkeren.
   const moetLoggen = !isEigenItem
 
-  const [categorieenRes, matchConfig, aanbiederItemsRes, viewerItemsRes, , weergavenTellingRes] =
-    await Promise.all([
-      payload.find({ collection: 'categories', limit: 200, depth: 0 }),
-      payload.findGlobal({ slug: 'match-score-config' }),
-      eigenaar
-        ? payload.find({
-            collection: 'shop-items',
-            where: {
-              and: [
-                { eigenaar: { equals: eigenaar.id } },
-                { status: { equals: 'beschikbaar' } },
-                { id: { not_equals: item.id } },
-              ],
-            },
-            depth: 1,
-            limit: 50,
+  const [
+    categorieenRes,
+    matchConfig,
+    aanbiederItemsRes,
+    viewerItemsRes,
+    ,
+    weergavenTellingRes,
+    bestaandVoorstelRes,
+    inkomendeVoorstellenRes,
+  ] = await Promise.all([
+    payload.find({ collection: 'categories', limit: 200, depth: 0 }),
+    payload.findGlobal({ slug: 'match-score-config' }),
+    eigenaar
+      ? payload.find({
+          collection: 'shop-items',
+          where: {
+            and: [
+              { eigenaar: { equals: eigenaar.id } },
+              { status: { equals: 'beschikbaar' } },
+              { id: { not_equals: item.id } },
+            ],
+          },
+          depth: 1,
+          limit: 50,
+        })
+      : Promise.resolve(null),
+    viewer && !isEigenItem
+      ? payload.find({
+          collection: 'shop-items',
+          where: {
+            and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }],
+          },
+          depth: 1,
+          limit: 50,
+        })
+      : Promise.resolve(null),
+    moetLoggen
+      ? payload
+          .create({
+            collection: 'item-views',
+            data: { item: item.id, ...(viewer ? { kijker: viewer.id } : {}) },
           })
-        : Promise.resolve(null),
-      viewer && !isEigenItem
-        ? payload.find({
-            collection: 'shop-items',
-            where: {
-              and: [{ eigenaar: { equals: viewer.id } }, { status: { equals: 'beschikbaar' } }],
-            },
-            depth: 1,
-            limit: 50,
-          })
-        : Promise.resolve(null),
-      moetLoggen
-        ? payload
-            .create({
-              collection: 'item-views',
-              data: { item: item.id, ...(viewer ? { kijker: viewer.id } : {}) },
-            })
-            .catch(() => null)
-        : Promise.resolve(null),
-      payload
-        .count({ collection: 'item-views', where: { item: { equals: item.id } } })
-        .catch(() => null),
-    ])
+          .catch(() => null)
+      : Promise.resolve(null),
+    payload
+      .count({ collection: 'item-views', where: { item: { equals: item.id } } })
+      .catch(() => null),
+    viewer && !isEigenItem && eigenaar
+      ? payload.find({
+          collection: 'trade-proposals',
+          where: {
+            and: [
+              { context_item: { equals: item.id } },
+              { deelnemer_a: { equals: eigenaar.id } },
+              { deelnemer_b: { equals: viewer.id } },
+            ],
+          },
+          sort: '-createdAt',
+          limit: 1,
+          depth: 0,
+        })
+      : Promise.resolve(null),
+    isEigenItem && viewer
+      ? payload.find({
+          collection: 'trade-proposals',
+          where: {
+            and: [{ context_item: { equals: item.id } }, { deelnemer_a: { equals: viewer.id } }],
+          },
+          sort: '-createdAt',
+          limit: 20,
+          depth: 1,
+        })
+      : Promise.resolve(null),
+  ])
 
   const weergavenTotaal = (weergavenTellingRes?.totalDocs ?? 0) + (moetLoggen ? 1 : 0)
+
+  const bestaandVoorstelId = bestaandVoorstelRes?.docs[0]?.id ?? null
+  const inkomendeVoorstellen = (inkomendeVoorstellenRes?.docs ?? []) as TradeProposal[]
 
   const categorieMap = bouwCategorieMap(categorieenRes.docs)
   const aanbiederItems = aanbiederItemsRes?.docs ?? []
@@ -111,6 +149,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     .sort((a, b) => b.score - a.score)
 
   const besteRuilkans = ruilkansen[0]
+
+  const eigenSelecteerbareItems = ruilkansen.map(({ kandidaat, score }) => ({
+    id: kandidaat.id,
+    titel: kandidaat.titel,
+    categorie: typeof kandidaat.categorie === 'object' ? kandidaat.categorie.naam : '',
+    match: score,
+  }))
 
   const hogeMatchDrempel = matchConfig.ontdekken_hoge_match_drempel ?? 75
 
@@ -199,16 +244,46 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             )}
 
             {isEigenItem ? (
-              <div className="niet-ingelogd-melding">Dit is een van je eigen items.</div>
+              viewer && inkomendeVoorstellen.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ fontSize: 12.5, color: 'var(--swopla-grijs)' }}>
+                    Binnengekomen ruilvoorstellen voor dit item:
+                  </div>
+                  {inkomendeVoorstellen.map((voorstel) => {
+                    const zoeker =
+                      typeof voorstel.deelnemer_b === 'object' ? voorstel.deelnemer_b : null
+                    return (
+                      <RuilvoorstelPaneel
+                        key={voorstel.id}
+                        rol="aanbieder"
+                        viewerId={viewer.id}
+                        itemId={item.id}
+                        itemTitel={item.titel}
+                        tegenpartijNaam={zoeker?.naam ?? zoeker?.email ?? 'Onbekend'}
+                        tegenpartijId={zoeker?.id ?? 0}
+                        initialVoorstelId={voorstel.id}
+                        variant="aanbieder-rij"
+                        triggerLabel={
+                          voorstel.status === 'voorgesteld' ? 'Nieuw voorstel' : undefined
+                        }
+                      />
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="niet-ingelogd-melding">Dit is een van je eigen items.</div>
+              )
             ) : viewer ? (
-              <button
-                type="button"
-                className="swopla-btn swopla-btn--primair"
-                style={{ width: '100%' }}
-                title="Ruilvoorstel-overlay is nog niet gebouwd (buiten scope van deze eerste versie)"
-              >
-                Stel een ruil voor
-              </button>
+              <RuilvoorstelPaneel
+                rol="zoeker"
+                viewerId={viewer.id}
+                itemId={item.id}
+                itemTitel={item.titel}
+                tegenpartijNaam={eigenaar?.naam ?? eigenaar?.email ?? 'de aanbieder'}
+                tegenpartijId={eigenaar?.id ?? 0}
+                eigenSelecteerbareItems={eigenSelecteerbareItems}
+                initialVoorstelId={bestaandVoorstelId}
+              />
             ) : (
               <div className="niet-ingelogd-melding">
                 Kies hierboven een testgebruiker om te zien hoe dit item bij jouw shop past.

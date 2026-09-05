@@ -171,11 +171,25 @@ export const TradeProposals: CollectionConfig = {
   },
   fields: [
     {
+      name: 'context_item',
+      type: 'relationship',
+      relationTo: 'shop-items',
+      hasMany: false,
+      required: true,
+      admin: {
+        description:
+          'Het item waarvan de productpagina dit ruilvoorstel startte. Elk voorstel draait om precies 1 anker-item (zo toont ook het ruilvoorstel-paneel altijd 1 titel/foto in de header), ongeacht hoeveel items er in latere versies bij komen. deelnemer_a is altijd de eigenaar van dit item ("aanbieder"), deelnemer_b altijd wie het voorstel startte ("zoeker").',
+      },
+    },
+    {
       name: 'deelnemer_a',
       type: 'relationship',
       relationTo: 'users',
       hasMany: false,
       required: true,
+      admin: {
+        description: 'Eigenaar van context_item ("aanbieder"), zie context_item hierboven.',
+      },
     },
     {
       name: 'deelnemer_b',
@@ -183,6 +197,19 @@ export const TradeProposals: CollectionConfig = {
       relationTo: 'users',
       hasMany: false,
       required: true,
+      admin: {
+        description: 'Wie het voorstel startte ("zoeker"), zie context_item hierboven.',
+      },
+    },
+    {
+      name: 'akkoord_door',
+      type: 'relationship',
+      relationTo: 'users',
+      hasMany: false,
+      admin: {
+        description:
+          'Wie als eerste op "Akkoord geven" klikte (status geaccepteerd_wacht_op_bevestiging). De ANDERE deelnemer moet dit vervolgens zelf bevestigen voordat status voltooid wordt. Leeg zolang niemand akkoord heeft gegeven; wordt weer leeggemaakt bij weigeren/sluiten.',
+      },
     },
     {
       name: 'status',

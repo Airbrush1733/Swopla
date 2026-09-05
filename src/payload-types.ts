@@ -298,8 +298,22 @@ export interface ShopItem {
  */
 export interface TradeProposal {
   id: number;
+  /**
+   * Het item waarvan de productpagina dit ruilvoorstel startte. Elk voorstel draait om precies 1 anker-item (zo toont ook het ruilvoorstel-paneel altijd 1 titel/foto in de header), ongeacht hoeveel items er in latere versies bij komen. deelnemer_a is altijd de eigenaar van dit item ("aanbieder"), deelnemer_b altijd wie het voorstel startte ("zoeker").
+   */
+  context_item: number | ShopItem;
+  /**
+   * Eigenaar van context_item ("aanbieder"), zie context_item hierboven.
+   */
   deelnemer_a: number | User;
+  /**
+   * Wie het voorstel startte ("zoeker"), zie context_item hierboven.
+   */
   deelnemer_b: number | User;
+  /**
+   * Wie als eerste op "Akkoord geven" klikte (status geaccepteerd_wacht_op_bevestiging). De ANDERE deelnemer moet dit vervolgens zelf bevestigen voordat status voltooid wordt. Leeg zolang niemand akkoord heeft gegeven; wordt weer leeggemaakt bij weigeren/sluiten.
+   */
+  akkoord_door?: (number | null) | User;
   /**
    * Elke statuswijziging triggert een Notification (categorie Ruilvoorstel) en, bij voltooid/verlopen/ingetrokken, een trackrecord-teller op Users (zie hooks in dit bestand).
    */
@@ -689,8 +703,10 @@ export interface ShopItemsSelect<T extends boolean = true> {
  * via the `definition` "trade-proposals_select".
  */
 export interface TradeProposalsSelect<T extends boolean = true> {
+  context_item?: T;
   deelnemer_a?: T;
   deelnemer_b?: T;
+  akkoord_door?: T;
   status?: T;
   updatedAt?: T;
   createdAt?: T;
