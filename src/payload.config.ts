@@ -62,7 +62,11 @@ export default buildConfig({
             collections: {
                 media: true,
             },
-            token: process.env.BLOB_READ_WRITE_TOKEN || '',
+            // De Vercel Blob-store in dit project heet "SwoplaPublic", dus Vercel injecteert de
+            // token als SWOPLAPUBLIC_READ_WRITE_TOKEN (niet de generieke BLOB_READ_WRITE_TOKEN --
+            // die bestaat hier niet). BLOB_READ_WRITE_TOKEN blijft als eerste keuze staan voor het
+            // geval de store ooit hernoemd/opnieuw gekoppeld wordt.
+            token: process.env.BLOB_READ_WRITE_TOKEN || process.env.SWOPLAPUBLIC_READ_WRITE_TOKEN || '',
         }),
     ],
 })
