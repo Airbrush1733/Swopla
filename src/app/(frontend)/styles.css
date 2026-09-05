@@ -717,6 +717,13 @@ button {
   border-color: var(--swopla-groen);
 }
 
+/* Items in de shop-tab van het Ruilvoorstel-paneel zijn niet klikbaar (geen navigatie naar de
+   productpagina vanuit een lopende onderhandeling), dus geen groene hover-rand die klikbaarheid
+   suggereert. Toevoegen aan de deal gaat via de knop in de voettekst, zie hieronder. */
+.product-kaart--statisch:hover {
+  border-color: var(--swopla-rand);
+}
+
 .product-kaart__afbeelding {
   position: relative;
   height: 150px;
@@ -763,6 +770,43 @@ button {
 
 .product-kaart__sub {
   font-size: 12px;
+  color: var(--swopla-grijs-licht);
+}
+
+.paneel-shop-kaart__voettekst {
+  padding: 0 14px 14px;
+}
+
+.paneel-shop-kaart__vraag-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--swopla-grijs);
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.paneel-shop-kaart__vraag-link svg {
+  flex-shrink: 0;
+  color: var(--swopla-groen);
+}
+
+.paneel-shop-kaart__vraag-link:hover:not(:disabled) {
+  color: var(--swopla-groen-donker);
+  text-decoration: underline;
+}
+
+.paneel-shop-kaart__vraag-link:disabled {
+  cursor: default;
+  color: var(--swopla-grijs-licht);
+}
+
+.paneel-shop-kaart__vraag-link:disabled svg {
   color: var(--swopla-grijs-licht);
 }
 

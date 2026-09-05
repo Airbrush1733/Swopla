@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { initialenVan } from '@/lib/format'
@@ -140,6 +139,7 @@ export default function RuilvoorstelPaneel({
 
   const [shopItems, setShopItems] = useState<ShopItemSamenvatting[] | null>(null)
   const [shopLoading, setShopLoading] = useState(false)
+  const [gevraagdItemIds, setGevraagdItemIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     if (activeTab !== 'shop' || shopItems !== null || shopLoading) return
@@ -209,6 +209,19 @@ export default function RuilvoorstelPaneel({
     if (!voorstelId || !state) return
     await metFoutafhandeling(async () => {
       await wijzigItemsVanZoeker(voorstelId, [...state.itemsVanZoeker.map((i) => i.id), id])
+      await ververs()
+    })
+  }
+
+  async function handleVraagToevoegen(item: ShopItemSamenvatting) {
+    if (!voorstelId) return
+    await metFoutafhandeling(async () => {
+      await stuurBericht(
+        voorstelId,
+        `Zou je "${item.titel}" willen toevoegen aan dit ruilvoorstel?`,
+      )
+      setGevraagdItemIds((prev) => new Set(prev).add(item.id))
+      setActiveTab('voorstel')
       await ververs()
     })
   }
@@ -517,8 +530,9 @@ export default function RuilvoorstelPaneel({
                   }}
                 >
                   <div style={{ flexShrink: 0, fontSize: 12.5, color: TEKST_GRIJS }}>
-                    Zie je iets dat je erbij wilt? Vraag het in de chat, {tegenpartijNaam} kan het
-                    dan zelf aan de ruil toevoegen.
+                    Zie je iets dat je erbij wilt? Klik bij een item op de knop, dan sturen we
+                    automatisch een berichtje naar {tegenpartijNaam} in de chat om het toe te
+                    voegen.
                   </div>
                   <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 }}>
                     {shopLoading || shopItems === null ? (
@@ -531,17 +545,43 @@ export default function RuilvoorstelPaneel({
                       </div>
                     ) : (
                       <div className="product-grid product-grid--paneel">
-                        {shopItems.map((it) => (
-                          <Link key={it.id} href={`/items/${it.id}`} className="product-kaart">
-                            <div className="product-kaart__afbeelding">
-                              {it.fotoUrl && <img src={it.fotoUrl} alt={it.titel} />}
+                        {shopItems.map((it) => {
+                          const gevraagd = gevraagdItemIds.has(it.id)
+                          return (
+                            <div key={it.id} className="product-kaart product-kaart--statisch">
+                              <div className="product-kaart__afbeelding">
+                                {it.fotoUrl && <img src={it.fotoUrl} alt={it.titel} />}
+                              </div>
+                              <div className="product-kaart__body">
+                                <div className="product-kaart__titel">{it.titel}</div>
+                                <div className="product-kaart__sub">{it.categorie}</div>
+                              </div>
+                              <div className="paneel-shop-kaart__voettekst">
+                                <button
+                                  type="button"
+                                  className="paneel-shop-kaart__vraag-link"
+                                  disabled={busy || !voorstelId || gevraagd}
+                                  onClick={() => handleVraagToevoegen(it)}
+                                >
+                                  <svg
+                                    width="13"
+                                    height="13"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                                  </svg>
+                                  {gevraagd ? 'Gevraagd in chat' : 'Vraag toe te voegen'}
+                                </button>
+                              </div>
                             </div>
-                            <div className="product-kaart__body">
-                              <div className="product-kaart__titel">{it.titel}</div>
-                              <div className="product-kaart__sub">{it.categorie}</div>
-                            </div>
-                          </Link>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
                   </div>
