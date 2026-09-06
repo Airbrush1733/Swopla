@@ -177,6 +177,15 @@ export default function RuilvoorstelPaneel({
     setGeselecteerd((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
+  // Een foutmelding hoort bij het tabblad waarop de actie plaatsvond (bv. "vraag toe te voegen"
+  // op het Shop-tabblad) -- bij het wisselen van tabblad ruimen we hem daarom meteen op, anders
+  // blijft hij zichtbaar op een tabblad waar hij niet bij hoort, en blijft hij ook staan als je
+  // wegnavigeert en terugkomt.
+  function wisselTab(tab: 'voorstel' | 'shop') {
+    setFoutmelding(null)
+    setActiveTab(tab)
+  }
+
   async function handleVerstuurVoorstel() {
     await metFoutafhandeling(async () => {
       const nieuwId = await startVoorstel(itemId, geselecteerd, toelichting)
@@ -214,8 +223,15 @@ export default function RuilvoorstelPaneel({
   }
 
   async function handleVraagToevoegen(item: ShopItemSamenvatting) {
-    if (!voorstelId) return
     await metFoutafhandeling(async () => {
+      // Een voorstel-record kan al bestaan (voorstelId gezet) terwijl er 0 items in staan --
+      // bv. net het laatst voorgestelde item verwijderd, zie handleVerwijderItem. Dan is er in
+      // de praktijk nog niets om aan te vragen, dus dezelfde melding als "nog geen voorstel".
+      if (!voorstelId || !state || state.itemsVanZoeker.length === 0) {
+        throw new Error(
+          'Stel eerst een voorstel voor via het tabblad "Jouw voorstel", dan kun je hier vragen om iets toe te voegen.',
+        )
+      }
       await stuurBericht(
         voorstelId,
         `Zou je "${item.titel}" willen toevoegen aan dit ruilvoorstel?`,
@@ -363,6 +379,67 @@ export default function RuilvoorstelPaneel({
               overflow: 'hidden',
             }}
           >
+            {/* Foutmelding als overlay midden over het hele paneel, in plaats van de kleine
+                tekst onderin de footer die makkelijk over het hoofd werd gezien. Ligt los van
+                activeTab: een tabwissel ruimt hem op via wisselTab hierboven, dus hij verdwijnt
+                vanzelf zodra je naar een ander tabblad gaat en komt niet terug bij navigeren. */}
+            {foutmelding && (
+              <div
+                onClick={() => setFoutmelding(null)}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(20,20,20,0.55)',
+                  zIndex: 60,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 28,
+                }}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    background: '#fff',
+                    borderRadius: 14,
+                    padding: '24px 26px',
+                    maxWidth: 320,
+                    textAlign: 'center',
+                    boxShadow: '0 16px 44px rgba(0,0,0,0.28)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 13.5,
+                      fontWeight: 600,
+                      lineHeight: 1.5,
+                      color: 'oklch(45% 0.16 25)',
+                    }}
+                  >
+                    {foutmelding}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFoutmelding(null)}
+                    style={{
+                      marginTop: 16,
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: GROEN,
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontFamily: 'Fredoka',
+                      fontSize: 12.5,
+                      padding: '9px 22px',
+                      borderRadius: 20,
+                    }}
+                  >
+                    Oké
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Header. flexWrap zodat de statusbadge/Sluiten/kruisje onder de titel vallen
                 i.p.v. eroverheen als de titel op smalle schermen meerdere regels beslaat. */}
             <div
@@ -477,7 +554,7 @@ export default function RuilvoorstelPaneel({
               }}
             >
               <div
-                onClick={() => setActiveTab('voorstel')}
+                onClick={() => wisselTab('voorstel')}
                 style={{
                   cursor: 'pointer',
                   padding: '13px 2px',
@@ -491,7 +568,7 @@ export default function RuilvoorstelPaneel({
                 {rol === 'aanbieder' ? `Voorstel van ${tegenpartijNaam}` : 'Jouw voorstel'}
               </div>
               <div
-                onClick={() => setActiveTab('shop')}
+                onClick={() => wisselTab('shop')}
                 style={{
                   cursor: 'pointer',
                   padding: '13px 2px',
@@ -560,7 +637,7 @@ export default function RuilvoorstelPaneel({
                                 <button
                                   type="button"
                                   className="paneel-shop-kaart__vraag-link"
-                                  disabled={busy || !voorstelId || gevraagd}
+                                  disabled={busy || gevraagd}
                                   onClick={() => handleVraagToevoegen(it)}
                                 >
                                   <svg
@@ -895,6 +972,14 @@ export default function RuilvoorstelPaneel({
                                   Jouw voorstel
                                 </div>
                               </div>
+                              {state.itemsVanZoeker.length === 0 && (
+                                <div
+                                  style={{ fontSize: 12.5, color: TEKST_GRIJS, lineHeight: 1.5 }}
+                                >
+                                  Je hebt nog niets geselecteerd. Kies hieronder producten uit je
+                                  shop om aan dit voorstel toe te voegen.
+                                </div>
+                              )}
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                                 {state.itemsVanZoeker.map((g) => (
                                   <div
@@ -1445,11 +1530,6 @@ export default function RuilvoorstelPaneel({
                 gap: 12,
               }}
             >
-              {foutmelding && (
-                <div style={{ fontSize: 12.5, color: 'oklch(45% 0.16 25)', textAlign: 'center' }}>
-                  {foutmelding}
-                </div>
-              )}
               {activeTab === 'shop' ? null : rol === 'zoeker' && !voorstelId ? (
                 geselecteerd.length === 0 ? (
                   <div style={{ textAlign: 'center', fontSize: 13, color: TEKST_GRIJS }}>
