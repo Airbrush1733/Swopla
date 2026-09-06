@@ -1351,7 +1351,12 @@ button {
   margin-top: 4px;
 }
 
-.item-form {
+/* .formulier is een naamgenoot van .item-form met exact dezelfde opmaak (zie de gedeelde
+   input-stijlen verderop), gebruikt voor de niet-item-formulieren die met login/registratie
+   zijn bijgekomen (registreren, inloggen, wachtwoord-vergeten/resetten, onboarding) -- zelfde
+   opmaak hergebruiken, maar niet onder een item-specifieke naam. */
+.item-form,
+.formulier {
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -1403,7 +1408,13 @@ button {
 }
 
 .item-form input[type='text'],
-.item-form textarea {
+.item-form input[type='email'],
+.item-form input[type='password'],
+.item-form textarea,
+.formulier input[type='text'],
+.formulier input[type='email'],
+.formulier input[type='password'],
+.formulier textarea {
   border: 1px solid var(--swopla-rand);
   border-radius: 10px;
   padding: 10px 14px;
@@ -1416,11 +1427,18 @@ button {
 }
 
 .item-form input[type='text']:focus,
-.item-form textarea:focus {
+.item-form input[type='email']:focus,
+.item-form input[type='password']:focus,
+.item-form textarea:focus,
+.formulier input[type='text']:focus,
+.formulier input[type='email']:focus,
+.formulier input[type='password']:focus,
+.formulier textarea:focus {
   border-color: var(--swopla-groen);
 }
 
-.item-form textarea {
+.item-form textarea,
+.formulier textarea {
   resize: vertical;
 }
 

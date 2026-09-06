@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import React, { Suspense } from 'react'
 
 import FilterZijbalk from '@/components/FilterZijbalk'
@@ -13,7 +14,7 @@ import {
   STAAT_LABELS,
   type OntdekkenFilters,
 } from '@/lib/ontdekkenFilters'
-import { getPayloadClient, getViewer } from '@/lib/viewer'
+import { getEchteGebruiker, getPayloadClient, getViewer } from '@/lib/viewer'
 import { afstandKm } from '@/lib/geo'
 import type { User } from '@/payload-types'
 
@@ -45,6 +46,16 @@ export default async function OntdekkenPage({
   const filters = parseFilters(sp)
 
   const payload = await getPayloadClient()
+
+  // Intake-gate (besloten, zie technische-architectuur-schets.md -> Users, onboarding_voltooid
+  // en "Frontend: Login & registratie"): een echt, nieuw geregistreerd account moet eerst de
+  // intake (interesses + locatie) doorlopen voordat het Ontdekken te zien krijgt. Expliciet
+  // getEchteGebruiker() i.p.v. getViewer(), zodat dit Ralphs testgebruikers niet raakt (die
+  // hebben allemaal al onboarding_voltooid: true via het seedscript).
+  const echteGebruiker = await getEchteGebruiker()
+  if (echteGebruiker && !echteGebruiker.onboarding_voltooid) {
+    redirect('/onboarding')
+  }
 
   // viewer + categorieën/matchConfig/shop-items lopen parallel: de shop-items-query zelf
   // hoeft niet op de viewer te wachten (de eigen items van de viewer worden er hieronder

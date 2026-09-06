@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { getPayload } from 'payload'
 
 import config from '@/payload.config'
@@ -12,26 +12,48 @@ export async function getPayloadClient() {
 }
 
 /**
- * Tijdelijke "bekijk als testgebruiker"-vervanging voor echte login (goedgekeurd door
- * Ralph als tussenoplossing, zie technische-architectuur-schets.md). Er bestaat nog geen
- * publieke registratie/login-flow. Dit leest alleen een cookie met een user-id, geen
- * echte sessie/wachtwoordcontrole. Moet vervangen worden zodra echte auth gebouwd wordt.
+ * Echte, ingelogde gebruiker (zie /inloggen, /registreren), gelezen via Payload's eigen
+ * sessiecookie (payload-token). Los van getViewer() hieronder zodat paginas die specifiek om
+ * een ECHTE sessie vragen (bv. de onboarding-intake-gate op de Ontdekken-pagina) dat kunnen
+ * onderscheiden van de testgebruiker-cookie.
+ */
+export async function getEchteGebruiker(): Promise<User | null> {
+  const payload = await getPayloadClient()
+  try {
+    const { user } = await payload.auth({ headers: await headers() })
+    if (!user || user.collection !== 'users') return null
+    if (user.account_status === 'geanonimiseerd') return null
+    return user as User
+  } catch {
+    return null
+  }
+}
+
+/**
+ * De "actieve" gebruiker voor de rest van de app. Combineert twee bronnen (besloten met Ralph
+ * bij het bouwen van login/registratie, zie technische-architectuur-schets.md → "Frontend:
+ * Login & registratie"): de tijdelijke testgebruiker-kiezer in de Nav blijft naast echte login
+ * bestaan, als snel dev/demo-hulpmiddel om zonder in-/uitloggen tussen testaccounts te
+ * wisselen. Als er een testgebruiker gekozen is, wint die expliciete keuze; anders valt dit
+ * terug op een echte, ingelogde sessie; anders null (gast).
  */
 export async function getViewer(): Promise<User | null> {
   const cookieStore = await cookies()
   const idRaw = cookieStore.get(VIEWER_COOKIE)?.value
-  if (!idRaw) return null
-  const id = Number(idRaw)
-  if (!Number.isFinite(id)) return null
-
-  const payload = await getPayloadClient()
-  try {
-    const gebruiker = await payload.findByID({ collection: 'users', id, depth: 0 })
-    if (gebruiker.account_status === 'geanonimiseerd') return null
-    return gebruiker
-  } catch {
-    return null
+  if (idRaw) {
+    const id = Number(idRaw)
+    if (Number.isFinite(id)) {
+      const payload = await getPayloadClient()
+      try {
+        const gebruiker = await payload.findByID({ collection: 'users', id, depth: 0 })
+        if (gebruiker.account_status !== 'geanonimiseerd') return gebruiker
+      } catch {
+        // Ongeldige/verwijderde testgebruiker-cookie, val hieronder terug op een echte sessie.
+      }
+    }
   }
+
+  return getEchteGebruiker()
 }
 
 /** Lijst voor de testgebruiker-kiezer in de nav, alle niet-geanonimiseerde accounts. */

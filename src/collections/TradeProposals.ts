@@ -31,6 +31,12 @@ const STATUS_LABELS: Record<string, string> = {
  * "Verificatieproces"): e-mail + telefoon moeten voor BEIDE deelnemers geverifieerd zijn
  * voordat een TradeProposal gestart (create) of geaccepteerd (status → acceptatie-statussen)
  * mag worden. Dit is een validatieregel, geen apart schemaveld.
+ *
+ * **Tijdelijke v1-afwijking (besloten met Ralph bij het bouwen van login/registratie, zie
+ * technische-architectuur-schets.md → "Frontend: Login & registratie"):** telefoonverificatie
+ * vereist een externe SMS-provider die er nog niet is, dus deze check vereist voor nu alleen
+ * `geverifieerd_email`. Zodra telefoonverificatie gebouwd wordt, hier `geverifieerd_telefoon`
+ * weer toevoegen aan de voorwaarde.
  */
 const checkVerificatie: CollectionBeforeChangeHook = async ({
   data,
@@ -56,9 +62,9 @@ const checkVerificatie: CollectionBeforeChangeHook = async ({
     // rest van deze operatie (zie notificerenEnTrackrecordBijwerken hieronder
     // voor waarom dat hier belangrijk is).
     const user = await req.payload.findByID({ collection: 'users', id, depth: 0, req })
-    if (!user?.geverifieerd_email || !user?.geverifieerd_telefoon) {
+    if (!user?.geverifieerd_email) {
       throw new Error(
-        `Beide deelnemers moeten e-mail én telefoon geverifieerd hebben voordat een ruilvoorstel gestart of geaccepteerd kan worden (gebruiker ${id} voldoet nog niet).`,
+        `Beide deelnemers moeten hun e-mailadres geverifieerd hebben voordat een ruilvoorstel gestart of geaccepteerd kan worden (gebruiker ${id} voldoet nog niet).`,
       )
     }
   }

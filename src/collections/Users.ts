@@ -1,6 +1,17 @@
 import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
 
 /**
+ * Basis-URL van de site voor links in e-mails (verificatie, wachtwoord-reset). Payload kent
+ * geen vaste `serverURL` in dit project (niet ingesteld in payload.config.ts), dus deze komt
+ * uit een eigen env-var. `NEXT_PUBLIC_APP_URL` moet lokaal (.env.local) en in Vercel
+ * (productie) gezet worden, zie technische-architectuur-schets.md → "Frontend: Login &
+ * registratie". Valt terug op localhost voor lokale ontwikkeling zonder die env-var.
+ */
+function siteUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+}
+
+/**
  * Anonimiseer-routine bij accountverwijdering (besloten, zie
  * technische-architectuur-schets.md → "Bouwstatus"): zodra account_status naar
  * 'geanonimiseerd' verandert (ongeacht welke UI dat aanroept, er is nog geen
@@ -43,12 +54,27 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
     defaultColumns: ['naam', 'email', 'account_status', 'onboarding_voltooid'],
   },
-  auth: true,
+  auth: {
+    // E-mailverificatie verplicht voor inloggen (besloten, zie technische-architectuur-schets.md
+    // → "Frontend: Login & registratie"): Payload blokkeert inloggen zelf al zolang _verified
+    // niet true is, geen extra code nodig hiervoor. De links in de e-mail wijzen naar onze eigen
+    // frontend-pagina's i.p.v. Payload's admin-UI, die bestaat niet voor eindgebruikers.
+    verify: {
+      generateEmailHTML: ({ token }) =>
+        `<p>Welkom bij Swopla!</p><p>Klik op de link hieronder om je e-mailadres te bevestigen en je account te activeren:</p><p><a href="${siteUrl()}/verifieer-email?token=${token}">${siteUrl()}/verifieer-email?token=${token}</a></p>`,
+      generateEmailSubject: () => 'Bevestig je e-mailadres voor Swopla',
+    },
+    forgotPassword: {
+      generateEmailHTML: ({ token } = {}) =>
+        `<p>Je hebt een nieuw wachtwoord aangevraagd voor je Swopla-account.</p><p><a href="${siteUrl()}/wachtwoord-resetten?token=${token}">${siteUrl()}/wachtwoord-resetten?token=${token}</a></p><p>Heb je dit niet zelf aangevraagd? Dan kun je deze e-mail negeren, er verandert niets aan je account.</p>`,
+      generateEmailSubject: () => 'Wachtwoord opnieuw instellen voor Swopla',
+    },
+  },
   hooks: {
     beforeChange: [anonimiseerBijStatuswijziging],
   },
   fields: [
-    // Email + wachtwoord komen automatisch mee via auth: true
+    // Email + wachtwoord komen automatisch mee via de auth-configuratie hierboven
 
     {
       name: 'naam',
@@ -88,13 +114,17 @@ export const Users: CollectionConfig = {
       defaultValue: false,
       admin: {
         description:
-          'Beide verificatievelden moeten true zijn voordat een gebruiker een TradeProposal mag starten of accepteren (afgedwongen in TradeProposals, niet hier).',
+          'Wordt automatisch true gezet zodra iemand de verificatielink uit de registratie-e-mail volgt (zie /verifieer-email en Payload\'s eigen _verified-veld). Voor v1 het enige verificatieveld dat verplicht is voor een TradeProposal (afgedwongen in TradeProposals, niet hier), telefoonverificatie is bewust uitgesteld, zie technische-architectuur-schets.md → "Frontend: Login & registratie".',
       },
     },
     {
       name: 'geverifieerd_telefoon',
       type: 'checkbox',
       defaultValue: false,
+      admin: {
+        description:
+          'Nog niet gebouwd in v1 (geen SMS-provider aangesloten), blijft voor iedereen false tot telefoonverificatie een latere bouwstap wordt.',
+      },
     },
 
     // --- Intern / anti-misbruik ---

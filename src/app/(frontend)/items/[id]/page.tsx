@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
+import GastRuilKnop from '@/components/GastRuilKnop'
 import RuilvoorstelPaneel from '@/components/RuilvoorstelPaneel'
 import { initialenVan } from '@/lib/format'
 import { bouwCategorieMap } from '@/lib/categorieHelpers'
@@ -300,9 +301,7 @@ export default async function ProductDetailPage({
                 initialVoorstelId={bestaandVoorstelId}
               />
             ) : (
-              <div className="niet-ingelogd-melding">
-                Kies hierboven een testgebruiker om te zien hoe dit item bij jouw shop past.
-              </div>
+              <GastRuilKnop nextPad={`/items/${item.id}`} />
             )}
           </div>
         </div>
@@ -355,7 +354,7 @@ export default async function ProductDetailPage({
 
           {!viewer && (
             <div className="niet-ingelogd-melding">
-              Kies hierboven een testgebruiker om je eigen Ruilkansen te zien.
+              Log in (of kies hierboven een testgebruiker) om je eigen Ruilkansen te zien.
             </div>
           )}
 

@@ -163,9 +163,12 @@ export interface User {
    */
   locatie_exact?: [number, number] | null;
   /**
-   * Beide verificatievelden moeten true zijn voordat een gebruiker een TradeProposal mag starten of accepteren (afgedwongen in TradeProposals, niet hier).
+   * Wordt automatisch true gezet zodra iemand de verificatielink uit de registratie-e-mail volgt (zie /verifieer-email en Payload's eigen _verified-veld). Voor v1 het enige verificatieveld dat verplicht is voor een TradeProposal (afgedwongen in TradeProposals, niet hier), telefoonverificatie is bewust uitgesteld, zie technische-architectuur-schets.md → "Frontend: Login & registratie".
    */
   geverifieerd_email?: boolean | null;
+  /**
+   * Nog niet gebouwd in v1 (geen SMS-provider aangesloten), blijft voor iedereen false tot telefoonverificatie een latere bouwstap wordt.
+   */
   geverifieerd_telefoon?: boolean | null;
   /**
    * Intern, geen gebruikersinput. Voor sockpuppet-/collusiedetectie.
@@ -207,6 +210,8 @@ export interface User {
   resetPasswordExpiration?: string | null;
   salt?: string | null;
   hash?: string | null;
+  _verified?: boolean | null;
+  _verificationToken?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   sessions?:
@@ -641,6 +646,8 @@ export interface UsersSelect<T extends boolean = true> {
   resetPasswordExpiration?: T;
   salt?: T;
   hash?: T;
+  _verified?: T;
+  _verificationToken?: T;
   loginAttempts?: T;
   lockUntil?: T;
   sessions?:

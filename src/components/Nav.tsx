@@ -2,8 +2,9 @@ import Link from 'next/link'
 import React from 'react'
 
 import { zetTestgebruiker } from '@/app/(frontend)/viewer-actions'
+import { uitloggen } from '@/app/(frontend)/uitloggen/actions'
 import { initialenVan } from '@/lib/format'
-import { getTestGebruikers, getViewer } from '@/lib/viewer'
+import { getEchteGebruiker, getTestGebruikers, getViewer } from '@/lib/viewer'
 
 function Logo() {
   return (
@@ -29,7 +30,11 @@ function Logo() {
 }
 
 export default async function Nav() {
-  const [viewer, testGebruikers] = await Promise.all([getViewer(), getTestGebruikers()])
+  const [viewer, testGebruikers, echteGebruiker] = await Promise.all([
+    getViewer(),
+    getTestGebruikers(),
+    getEchteGebruiker(),
+  ])
 
   return (
     <header className="nav">
@@ -58,6 +63,30 @@ export default async function Nav() {
             <div className="nav__avatar" title={viewer.naam ?? viewer.email}>
               {initialenVan(viewer.naam, viewer.email)}
             </div>
+          )}
+
+          {/* Echte login, los van de testgebruiker-cookie hieronder (zie src/lib/viewer.ts).
+              Alleen deze koppeling toont Uitloggen/Inloggen/Registreren, de "Bekijk als"-
+              dropdown blijft ongeacht daarvan gewoon bestaan als dev/demo-hulpmiddel. */}
+          {echteGebruiker ? (
+            <form action={uitloggen}>
+              <button
+                type="submit"
+                className="nav__link"
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                Uitloggen ({echteGebruiker.naam ?? echteGebruiker.email})
+              </button>
+            </form>
+          ) : (
+            <>
+              <Link href="/inloggen" className="nav__link">
+                Inloggen
+              </Link>
+              <Link href="/registreren" className="nav__link">
+                Account aanmaken
+              </Link>
+            </>
           )}
 
           <form action={zetTestgebruiker} className="nav__viewer-form">

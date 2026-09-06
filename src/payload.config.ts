@@ -1,4 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
+import { resendAdapter } from '@payloadcms/email-resend'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -56,6 +57,19 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
+  }),
+  // Resend voor verificatie- en wachtwoord-reset-e-mails (zie Users.ts → auth.verify/
+  // forgotPassword voor de e-mailinhoud zelf). RESEND_API_KEY moet lokaal (.env.local) en in
+  // Vercel (productie) gezet worden door Ralph, zie technische-architectuur-schets.md →
+  // "Frontend: Login & registratie". Standaard-afzender is Resend's eigen testadres
+  // (onboarding@resend.dev), dat werkt zonder domeinverificatie maar levert alleen af bij het
+  // e-mailadres van het Resend-account zelf. Zodra Ralph een eigen domein verifieert bij
+  // Resend, RESEND_FROM_EMAIL zetten naar bv. noreply@swopla.nl om aan iedereen te kunnen
+  // versturen.
+  email: resendAdapter({
+    apiKey: process.env.RESEND_API_KEY || '',
+    defaultFromAddress: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+    defaultFromName: 'Swopla',
   }),
   sharp,
   plugins: [
