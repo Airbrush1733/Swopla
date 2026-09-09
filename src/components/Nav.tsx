@@ -55,6 +55,20 @@ export default async function Nav() {
             </span>
           )}
 
+          {viewer ? (
+            <Link href="/ruilvoorstellen" className="nav__link">
+              Ruilvoorstellen
+            </Link>
+          ) : (
+            <span
+              className="nav__link"
+              style={{ color: 'var(--swopla-grijs-licht)' }}
+              title="Kies eerst een testgebruiker"
+            >
+              Ruilvoorstellen
+            </span>
+          )}
+
           <span className="nav__link" style={{ color: 'var(--swopla-grijs-licht)' }}>
             Veiligheid &amp; hulp
           </span>

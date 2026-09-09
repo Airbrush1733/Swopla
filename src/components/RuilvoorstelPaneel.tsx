@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { initialenVan } from '@/lib/format'
+import { initialenVan, tijdGeleden } from '@/lib/format'
 import type { VoorstelBalansRichting } from '@/lib/matchscore'
+import { STATUS_LABELS, statusBadgeKleuren } from '@/lib/ruilvoorstel-status'
 
 import {
   bevestigVoorstel,
@@ -52,18 +53,13 @@ interface RuilvoorstelPaneelProps {
   tegenpartijId: number
   eigenSelecteerbareItems?: EigenItemMetMatch[]
   initialVoorstelId: number | null
-  variant?: 'zoeker-knop' | 'aanbieder-rij'
+  variant?: 'zoeker-knop' | 'aanbieder-rij' | 'overzicht-rij'
   triggerLabel?: string
-}
-
-function tijdGeleden(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime()
-  const min = Math.floor(ms / 60000)
-  if (min < 1) return 'Zojuist'
-  if (min < 60) return `${min} min geleden`
-  const uur = Math.floor(min / 60)
-  if (uur < 24) return `${uur} uur geleden`
-  return new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+  /** Alleen gebruikt bij variant="overzicht-rij", zie het Ruilvoorstellen-overzicht. */
+  statusVoorRij?: VoorstelStateVoorClient['status']
+  laatsteActiviteitISO?: string
+  onbeantwoord?: boolean
+  itemsSamenvatting?: string
 }
 
 function balansLabel(richting: VoorstelBalansRichting, rol: 'zoeker' | 'aanbieder'): string {
@@ -71,25 +67,6 @@ function balansLabel(richting: VoorstelBalansRichting, rol: 'zoeker' | 'aanbiede
   if (richting === 'voordeel_zoeker')
     return rol === 'zoeker' ? 'In jouw voordeel' : 'In hun voordeel'
   return rol === 'aanbieder' ? 'In jouw voordeel' : 'In hun voordeel'
-}
-
-const STATUS_LABELS: Record<VoorstelStateVoorClient['status'], string> = {
-  bevestigd_door_a: 'Bevestigd door A',
-  bevestigd_door_b: 'Bevestigd door B',
-  geaccepteerd_wacht_op_bevestiging: 'Wacht op bevestiging',
-  geweigerd: 'Geweigerd',
-  in_onderhandeling: 'In onderhandeling',
-  ingetrokken: 'Gesloten',
-  verlopen: 'Verlopen',
-  voltooid: 'Voltooid',
-  voorgesteld: 'Nieuw voorstel',
-}
-
-function statusBadgeKleuren(status: VoorstelStateVoorClient['status']): { bg: string; fg: string } {
-  if (status === 'voltooid') return { bg: 'oklch(90% 0.06 150)', fg: 'oklch(30% 0.1 150)' }
-  if (status === 'geweigerd' || status === 'ingetrokken' || status === 'verlopen')
-    return { bg: 'oklch(93% 0.015 90)', fg: TEKST_GRIJS }
-  return { bg: 'oklch(95% 0.06 55)', fg: 'oklch(40% 0.11 55)' }
 }
 
 export default function RuilvoorstelPaneel({
@@ -103,6 +80,10 @@ export default function RuilvoorstelPaneel({
   initialVoorstelId,
   variant = rol === 'zoeker' ? 'zoeker-knop' : 'aanbieder-rij',
   triggerLabel,
+  statusVoorRij,
+  laatsteActiviteitISO,
+  onbeantwoord = false,
+  itemsSamenvatting,
 }: RuilvoorstelPaneelProps) {
   const [open, setOpen] = useState(false)
   const [voorstelId, setVoorstelId] = useState<number | null>(initialVoorstelId)
@@ -301,6 +282,97 @@ export default function RuilvoorstelPaneel({
         >
           {triggerLabel ?? (voorstelId ? 'Bekijk je ruilvoorstel' : 'Stel een ruil voor')}
         </button>
+      ) : variant === 'overzicht-rij' ? (
+        <div
+          onClick={() => setOpen(true)}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            padding: '14px 16px',
+            background: '#fff',
+            border: `1px solid ${RAND}`,
+            borderRadius: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background: 'oklch(55% 0.13 280)',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontFamily: 'Fredoka',
+                }}
+              >
+                {initialenVan(tegenpartijNaam, tegenpartijNaam)}
+              </div>
+              {onbeantwoord && (
+                <span
+                  aria-label="Nieuw, onbeantwoord bericht, actie van jou nodig"
+                  title="Nieuw, onbeantwoord bericht"
+                  style={{
+                    position: 'absolute',
+                    bottom: -1,
+                    right: -1,
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: GROEN,
+                    border: '2px solid #fff',
+                  }}
+                />
+              )}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 13.5 }}>{tegenpartijNaam}</div>
+              {itemsSamenvatting && (
+                <div
+                  style={{
+                    fontSize: 11.5,
+                    color: TEKST_GRIJS,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: 320,
+                  }}
+                >
+                  {itemsSamenvatting}
+                </div>
+              )}
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            {laatsteActiviteitISO && (
+              <span style={{ fontSize: 11, color: TEKST_GRIJS, whiteSpace: 'nowrap' }}>
+                {tijdGeleden(laatsteActiviteitISO)}
+              </span>
+            )}
+            {statusVoorRij && (
+              <span
+                style={{
+                  background: statusBadgeKleuren(statusVoorRij).bg,
+                  color: statusBadgeKleuren(statusVoorRij).fg,
+                  padding: '5px 10px',
+                  borderRadius: 20,
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {STATUS_LABELS[statusVoorRij]}
+              </span>
+            )}
+          </div>
+        </div>
       ) : (
         <div
           onClick={() => setOpen(true)}
